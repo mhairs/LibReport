@@ -1,0 +1,204 @@
+body {
+  margin: 0;
+  font-family: "Lora", sans-serif;
+  background-color: #2d4f2f;
+}
+
+.auth-container {
+  display: flex;
+  min-height: 100vh;
+  background: linear-gradient(to right, #80B35B 0%, #374D27 100%);
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+}
+
+.auth-left {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: #ffc94d;
+  text-align: center;
+}
+
+.logo {
+  width: 60%;
+  max-width: 350px; 
+  height: auto;
+  display: block;
+}
+
+.app-name {
+  font-size: 3rem;
+  font-weight: bold;
+  color: #D4AF37;
+  text-shadow: 1px 1px 2px #1b361b;
+  margin-top: -1rem;
+  font-family: "Merriweather", serif;
+}
+
+.auth-right {
+  flex: 2;
+  background: #fff;
+  padding: 3rem;
+  border-radius: 1rem;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+  max-width: 500px;
+  width: 100%;
+  margin-left: -0.3rem;
+  margin-right: 10rem;
+}
+
+.auth-right h2 {
+  text-align: center;
+  color: #000;
+  margin-bottom: 1rem;
+  font-size: 30px;
+}
+
+.subtitle {
+  text-align: center;
+  color: #666;
+  margin-bottom: 2rem;
+}
+
+.auth-form {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+.input-group {
+  position: relative;
+}
+
+.input-group input {
+  width: 95%;
+  padding: 10px;
+  border: none;
+  border-bottom: 1px solid #ccc;
+  outline: none;
+  transition: 0.3s;
+}
+
+.input-group input:focus {
+  border-color: #2f8132;
+}
+
+.signup-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.signup-form input {
+  width: 100%;
+  padding: 12px;
+  border: 1px solid #ccc; 
+  border-radius: 6px;
+  outline: none;
+  transition: border 0.3s;
+}
+
+.signup-form input:focus {
+  border-color: #2f8132;
+  box-shadow: 0 0 5px rgba(47, 129, 50, 0.3);
+}
+
+
+.signup-form .checkboxes {
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem; 
+  font-size: 0.95rem;
+  color: #333;
+}
+
+.signup-form .checkboxes label {
+  display: flex;
+  align-items: center; 
+  gap: 0.5rem;          
+  cursor: pointer;
+}
+
+.signup-form .checkboxes input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  accent-color: #2f8132;
+  cursor: pointer;
+}
+
+
+.btn {
+  background-color: #3b713b;
+  color: white;
+  padding: 10px;
+  border: none;
+  height: 40px;
+  width: 50%;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: bold;
+  transition: 0.3s;
+  font-size: 15px;
+  margin-left: 25%;
+}
+
+.btn:hover {
+  background-color: #5db85d;
+}
+
+.extra-links {
+  text-align: center;
+  margin-top: -1rem;
+}
+
+.extra-links a {
+  color: #2e5b2e;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.extra-links a:hover {
+  text-decoration: underline;
+}
+
+/* Responsive for Tablet */
+@media (max-width: 768px) {
+  .auth-container {
+    flex-direction: column; 
+    padding: 1rem;
+  }
+
+  .auth-left {
+    max-width: 100%;
+  }
+
+  .auth-right {
+    max-width: 80%;
+    margin: 1rem auto 0 auto; 
+  }
+
+  .logo {
+    max-width: 70%; 
+  }
+}
+
+/* Responsive for CP */
+@media (max-width: 480px) {
+  .auth-right {
+    padding: 1.5rem;
+    max-width: 80%;
+  }
+
+  .logo {
+    max-width: 60%;
+  }
+
+  .app-name {
+    font-size: 1.8rem;
+    margin-top: -0.5rem;
+  }
+}

@@ -1,0 +1,24 @@
+{
+  "id": "merriweather",
+  "family": "Merriweather",
+  "subsets": ["cyrillic", "cyrillic-ext", "latin", "latin-ext", "vietnamese"],
+  "weights": [300, 400, 500, 600, 700, 800, 900],
+  "styles": ["italic", "normal"],
+  "defSubset": "latin",
+  "variable": {
+    "ital": {"default": "0", "min": "0", "max": "1", "step": "1"},
+    "opsz": {"default": "18", "min": "18", "max": "144", "step": "0.1"},
+    "wdth": {"default": "100", "min": "87", "max": "112", "step": "0.1"},
+    "wght": {"default": "400", "min": "300", "max": "900", "step": "1"}
+  },
+  "lastModified": "2025-09-02",
+  "version": "v33",
+  "category": "serif",
+  "license": {
+    "type": "OFL-1.1",
+    "url": "https://openfontlicense.org",
+    "attribution": "Copyright 2024 The Merriweather Project Authors (https://github.com/EbenSorkin/Merriweather4) with Reserved Font Name \"Merriweather\". Merriweather-Italic[opsz,wdth,wght].ttf: Copyright 2024 The Merriweather Project Authors (https://github.com/EbenSorkin/Merriweather4) with Reserved Font Name \"Merriweather\"."
+  },
+  "source": "https://github.com/google/fonts",
+  "type": "google"
+}
