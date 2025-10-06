@@ -1,9 +1,16 @@
 import React from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import logo from "../assets/logo.png";
 import "../styles/Auth.css";
 
 const SignIn = () => {
+  const navigate = useNavigate();
+
+  const handleLogin = (e) => {
+    e.preventDefault();
+    navigate("/dashboard"); // Redirect to Dashboard after login
+  };
+
   return (
     <div className="auth-container">
       <div className="auth-left">
@@ -12,13 +19,13 @@ const SignIn = () => {
       </div>
 
       <div className="auth-right">
-        <h2 className="form-title">Log in to LibReport</h2>
-        <p className="subtitle">Log in to your account</p>
+        <h2>Sign in to LibReport</h2>
+        <h3>Log in to your account</h3>
 
-        <form className="auth-form">
+        <form className="auth-form" onSubmit={handleLogin}>
           <div className="input-group">
             <i className="fa fa-user"></i>
-            <input type="text" placeholder="Student ID" required />
+            <input type="text" placeholder="Admin ID" required />
           </div>
 
           <div className="input-group">
@@ -32,9 +39,9 @@ const SignIn = () => {
 
           <button type="submit" className="btn">Log in</button>
 
-          <p className="extra-links">
-            Don't have an account? <Link to="/signup">Sign Up</Link>
-          </p>
+          <div className="extra-links">
+            <p>Don’t have an account? <Link to="/signup">Sign Up</Link></p>
+          </div>
         </form>
       </div>
     </div>

@@ -55,6 +55,21 @@ body {
   margin-right: 10rem;
 }
 
+.auth-right h2 { 
+  text-align: center; 
+  color: #000; 
+  margin-bottom: 1rem; 
+  font-size: 30px; 
+} 
+  
+  .auth-right h3 { 
+    text-align: center; 
+    color: #4b4a4a; 
+    margin-bottom: 1rem; 
+    font-size: 15px; 
+    margin-top: -0.7rem; 
+  }
+
 .form-title {
   text-align: center;
   color: #000;
