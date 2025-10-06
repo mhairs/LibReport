@@ -10,22 +10,31 @@ const SignIn = () => {
         <img src={logo} alt="University Logo" className="logo" />
         <h1 className="app-name">LibReport</h1>
       </div>
+
       <div className="auth-right">
-        <h2>Sign in to LibReport</h2>
+        <h2 className="form-title">Log in to LibReport</h2>
+        <p className="subtitle">Log in to your account</p>
+
         <form className="auth-form">
           <div className="input-group">
             <i className="fa fa-user"></i>
-            <input type="text" placeholder="Username" required />
+            <input type="text" placeholder="Student ID" required />
           </div>
+
           <div className="input-group">
             <i className="fa fa-lock"></i>
             <input type="password" placeholder="Password" required />
           </div>
-          <button type="submit" className="btn">Sign In</button>
-          <div className="extra-links">
+
+          <div className="forgot-password">
             <a href="#">Forgot Password?</a>
-            <p>Don’t have an account? <Link to="/signup">Sign Up</Link></p>
           </div>
+
+          <button type="submit" className="btn">Log in</button>
+
+          <p className="extra-links">
+            Don't have an account? <Link to="/signup">Sign Up</Link>
+          </p>
         </form>
       </div>
     </div>
