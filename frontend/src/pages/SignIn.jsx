@@ -8,7 +8,7 @@ const SignIn = () => {
 
   const handleLogin = (e) => {
     e.preventDefault();
-    navigate("/dashboard"); // Redirect to Dashboard after login
+    navigate("/dashboard");
   };
 
   return (

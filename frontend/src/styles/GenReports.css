@@ -63,17 +63,19 @@
 }
 
 .close-btn {
-  margin-top: 1rem;
-  background: #4b6734;
-  color: white;
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background: transparent;
   border: none;
-  border-radius: 6px;
-  padding: 8px 20px;
+  color: #333;
+  font-size: 1.8rem;
   font-weight: bold;
   cursor: pointer;
-  transition: 0.3s;
+  transition: color 0.3s ease;
+  line-height: 1;
 }
 
 .close-btn:hover {
-  background: #5db85d;
+  color: #4b6734;
 }

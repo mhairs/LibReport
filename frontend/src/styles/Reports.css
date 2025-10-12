@@ -1,0 +1,220 @@
+/* MAIN CONTAINER */
+.reports-container {
+  display: flex;
+  background-color: #f6f6f6;
+  color: #333;
+  min-height: 100vh;
+}
+
+/* MAIN CONTENT SECTION */
+.reports-main {
+  flex: 1;
+  margin-left: 250px; 
+  padding: 2rem;
+  background: #f6f6f6;
+  overflow: visible; 
+  position: relative;
+  box-sizing: border-box;
+}
+
+/* TOPBAR */
+.reports-topbar {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  padding: 15px 30px;
+  margin-bottom: 25px;
+  margin-left: 150px;
+}
+
+/* PROFILE ICON */
+.profile-container {
+  position: relative;
+  cursor: pointer;
+}
+
+.profile-circle {
+  width: 45px;
+  height: 45px;
+  border-radius: 50%;
+  overflow: hidden;
+  background: #4f6936;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.profile-circle img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+
+.profile-dropdown {
+  position: absolute;
+  top: 55px;
+  right: 0;
+  background: #fff;
+  border-radius: 6px;
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.25);
+  z-index: 100;
+}
+
+.profile-dropdown button {
+  background: none;
+  border: none;
+  padding: 10px 20px;
+  cursor: pointer;
+  width: 100%;
+  text-align: left;
+  color: #333;
+  font-weight: 600;
+}
+
+.profile-dropdown button:hover {
+  background: #f0f0f0;
+}
+
+/* REPORT SECTION */
+.report-content {
+  background: #fff;
+  border-radius: 8px;
+  padding: 20px;
+  box-shadow: 0px 3px 8px rgba(0, 0, 0, 0.15);
+  overflow: visible; 
+  position: relative;
+  z-index: 10;
+}
+
+.report-content h2 {
+  margin-bottom: 15px;
+  color: #2d2d2d;
+}
+
+/* TABS */
+.tab-buttons {
+  margin-bottom: 10px;
+}
+
+.tab-buttons button {
+  background: #ddd;
+  border: none;
+  margin-right: 5px;
+  padding: 6px 15px;
+  border-radius: 5px;
+  cursor: pointer;
+  font-weight: 500;
+  transition: all 0.2s ease;
+}
+
+.tab-buttons button.active {
+  background: #4f6936;
+  color: #fff;
+}
+
+/* REPORT TYPE DROPDOWN */
+.report-type-dropdown {
+  margin-bottom: 15px;
+}
+
+.report-type-dropdown select {
+  padding: 6px 10px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  background: #fff;
+  font-size: 14px;
+  color: #333;
+  cursor: pointer;
+  z-index: 50; 
+  position: relative;
+}
+
+.report-type-dropdown select:focus {
+  outline: none;
+  border-color: #4f6936;
+}
+
+/* REPORT BOX */
+.report-box {
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  padding: 15px;
+  background: #f8f8f8;
+}
+
+/* SUMMARY TABLE */
+.summary-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 15px;
+}
+
+.summary-table th {
+  background: #4f6936;
+  color: white;
+  padding: 8px;
+  text-align: left;
+}
+
+.summary-table td {
+  padding: 8px;
+  background: #fff;
+  border-bottom: 1px solid #ddd;
+}
+
+/* DATA SECTION */
+.data-section {
+  display: flex;
+  justify-content: space-between;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+
+.time-table {
+  border-collapse: collapse;
+  background: white;
+  flex: 1;
+  min-width: 280px;
+}
+
+.time-table th {
+  background: #4f6936;
+  color: white;
+  padding: 6px;
+}
+
+.time-table td {
+  padding: 6px;
+  border-bottom: 1px solid #ddd;
+  text-align: center;
+}
+
+.chart-container {
+  flex: 2;
+  background: white;
+  border-radius: 8px;
+  padding: 10px;
+  min-width: 300px;
+}
+
+/* DOWNLOAD BUTTON */
+.download-btn-container {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 15px;
+}
+
+.download-btn {
+  background: #4f6936;
+  color: white;
+  padding: 8px 14px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.download-btn:hover {
+  background: #3e542a;
+}

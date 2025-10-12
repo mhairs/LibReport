@@ -1,0 +1,127 @@
+.heatmap-layout {
+  display: flex;
+  min-height: 100vh;
+  background-color: #dcdcdc;
+}
+
+.heatmap-content {
+  flex: 1;
+  margin-left: 240px;
+  padding: 2rem;
+  background-color: #e5e5e5;
+}
+
+
+.heatmap-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 15px 30px;
+  background-color: #e5e5e5;
+}
+
+.heatmap-header h2 {
+  margin: 0;
+  font-weight: 700;
+  color: #222;
+}
+
+
+.profile-container {
+  position: relative;
+  cursor: pointer;
+}
+
+.profile-circle {
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  overflow: hidden;
+  background: #0077b6;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.profile-circle img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+
+.profile-dropdown {
+  position: absolute;
+  top: 60px;
+  right: 0;
+  background: #fff;
+  border-radius: 6px;
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.25);
+  z-index: 10;
+}
+
+.profile-dropdown button {
+  background: none;
+  border: none;
+  padding: 10px 20px;
+  cursor: pointer;
+  width: 80%;
+  text-align: left;
+  color: #333;
+  font-weight: 600;
+}
+
+.profile-dropdown button:hover {
+  background: #f0f0f0;
+}
+
+
+.heatmap-card {
+  background-color: #fff;
+  border-radius: 6px;
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.3);
+  padding: 0;
+  overflow: hidden;
+}
+
+
+.heatmap-body {
+  padding: 1.5rem;
+}
+
+.heatmap-controls {
+  display: flex;
+  justify-content: flex-start;
+  align-items: center;
+  gap: 2rem;
+  margin-bottom: 1.5rem;
+}
+
+.heatmap-controls label {
+  margin-right: 0.5rem;
+  font-weight: 600;
+  color: #222;
+}
+
+
+.heatmap-controls select {
+  padding: 6px 10px;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+  background-color: #fff;
+  box-shadow: 1px 1px 3px rgba(0, 0, 0, 0.3);
+  cursor: pointer;
+  font-weight: 500;
+  appearance: none;
+  background-image: url("data:image/svg+xml;utf8,<svg fill='black' height='10' viewBox='0 0 24 24' width='10' xmlns='http://www.w3.org/2000/svg'><path d='M7 10l5 5 5-5z'/></svg>");
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+}
+
+
+.chart-card {
+  background-color: #fff;
+  border-radius: 6px;
+  padding: 1rem;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25);
+}

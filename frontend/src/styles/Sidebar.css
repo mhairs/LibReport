@@ -52,3 +52,52 @@
   border-left: 4px solid #d4af37;
   padding-left: 24px;
 }
+
+/* ✅ ADMIN PANEL DROPDOWN STYLES */
+.dropdown-section {
+  width: 100%;
+}
+
+.dropdown-toggle {
+  color: #fff;
+  text-decoration: none;
+  padding: 12px 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.3s, padding-left 0.3s;
+}
+
+.dropdown-toggle:hover {
+  background-color: #4b6734;
+  border-left: 4px solid #d4af37;
+  padding-left: 24px;
+}
+
+.dropdown-links {
+  display: flex;
+  flex-direction: column;
+  background-color: #3b5730;
+}
+
+.dropdown-links a {
+  color: #fff;
+  text-decoration: none;
+  padding: 10px 40px;
+  font-size: 14px;
+  transition: background 0.3s, padding-left 0.3s;
+}
+
+.dropdown-links a:hover,
+.dropdown-links a.active {
+  background-color: #4b6734;
+  border-left: 4px solid #d4af37;
+  padding-left: 44px;
+}
+
+.arrow {
+  font-size: 12px;
+  margin-left: 5px;
+}
