@@ -1,40 +1,90 @@
 // db/seed.js
-const path = require('path');
-require('dotenv').config({ path: path.resolve(__dirname, './.env') });
+const path = require('node:path');
+require('dotenv').config({ path: path.resolve(process.cwd(), '.env') });
 const { MongoClient } = require('mongodb');
 
 const uri = process.env.MONGO_URI || process.env.MONGODB_URI;
 const dbName = process.env.DB_NAME || 'libreport';
+if (!uri) throw new Error('MONGO_URI not set');
 
-(async () => {
-  const client = new MongoClient(uri);
-  try {
-    await client.connect();
-    const db = client.db(dbName);
+const client = new MongoClient(uri);
 
-    // collections for a library/report app
-    await db.collection('users').insertMany([
-      { _id: 'u1', name: 'Alice', role: 'student' },
-      { _id: 'u2', name: 'Bob', role: 'librarian' }
-    ]);
+async function ensureIndexes(db) {
+  await db.collection('books').createIndexes([
+    { key: { title: 'text', author: 'text' }, name: 'books_text' }
+  ]);
+  await db.collection('loans').createIndexes([
+    { key: { userId: 1, returnedAt: 1 }, name: 'loans_user_returned' },
+    { key: { dueAt: 1 }, name: 'loans_due' },
+    { key: { bookId: 1 }, name: 'loans_book' }
+  ]);
+  await db.collection('users').createIndexes([
+    { key: { role: 1, name: 1 }, name: 'users_role_name' }
+  ]);
+  await db.collection('hours').createIndexes([
+    { key: { branch: 1, dayOfWeek: 1 }, name: 'hours_branch_dow', unique: true }
+  ]);
+}
 
-    await db.collection('books').insertMany([
-      { _id: 'b1', title: 'Clean Code', author: 'Robert C. Martin' },
-      { _id: 'b2', title: 'Design of Everyday Things', author: 'Don Norman' }
-    ]);
+function upsertsFromArray(arr, key = '_id') {
+  return arr.map(doc => ({
+    updateOne: { filter: { [key]: doc[key] }, update: { $set: doc }, upsert: true }
+  }));
+}
 
-    await db.collection('loans').insertMany([
-      { userId: 'u1', bookId: 'b1', borrowedAt: new Date(), returnedAt: null }
-    ]);
+async function main() {
+  await client.connect();
+  const db = client.db(dbName);
 
-    await db.collection('visits').insertMany([
-      { userId: 'u1', enteredAt: new Date() }
-    ]);
+  // --- USERS ---
+  const users = [
+    { _id: 'u1', name: 'Alice', role: 'student', email: 'alice@lib.edu' },
+    { _id: 'u2', name: 'Bob', role: 'student', email: 'bob@lib.edu' },
+    { _id: 'lib1', name: 'Sam Librarian', role: 'librarian', email: 'sam@lib.edu' }
+  ];
+  await db.collection('users').bulkWrite(upsertsFromArray(users));
 
-    console.log('✅ Seeded sample data');
-  } catch (e) {
-    console.error('❌ Seed error:', e.message);
-  } finally {
-    await client.close();
-  }
-})();
+  // --- BOOKS ---
+  const books = [
+    { _id: 'b1', title: 'Clean Code', author: 'Robert C. Martin', categories: ['Software'], totalCopies: 3, availableCopies: 1 },
+    { _id: 'b2', title: 'The Design of Everyday Things', author: 'Don Norman', categories: ['Design'], totalCopies: 2, availableCopies: 2 },
+    { _id: 'b3', title: 'Introduction to Algorithms', author: 'Cormen et al.', categories: ['CS'], totalCopies: 5, availableCopies: 4 }
+  ];
+  await db.collection('books').bulkWrite(upsertsFromArray(books));
+
+  // --- LOANS (some active, some returned) ---
+  const now = new Date();
+  const twoWeeks = 14 * 864e5;
+  const loans = [
+    // Active loan (not returned)
+    { _id: 'l1', userId: 'u1', bookId: 'b1', borrowedAt: new Date(now - 7 * 864e5), dueAt: new Date(now + 7 * 864e5), returnedAt: null },
+    // Overdue loan
+    { _id: 'l2', userId: 'u1', bookId: 'b2', borrowedAt: new Date(now - 20 * 864e5), dueAt: new Date(now - 6 * 864e5), returnedAt: null },
+    // Returned loan
+    { _id: 'l3', userId: 'u2', bookId: 'b3', borrowedAt: new Date(now - 10 * 864e5), dueAt: new Date(now - 10 * 864e5 + twoWeeks), returnedAt: new Date(now - 2 * 864e5) }
+  ];
+  await db.collection('loans').bulkWrite(upsertsFromArray(loans));
+
+  // --- HOURS (Mon=1..Sun=7) ---
+  const branch = 'Main';
+  const hours = [
+    { dayOfWeek: 1, open: '09:00', close: '18:00', closed: false },
+    { dayOfWeek: 2, open: '09:00', close: '18:00', closed: false },
+    { dayOfWeek: 3, open: '09:00', close: '18:00', closed: false },
+    { dayOfWeek: 4, open: '09:00', close: '18:00', closed: false },
+    { dayOfWeek: 5, open: '09:00', close: '17:00', closed: false },
+    { dayOfWeek: 6, open: '10:00', close: '14:00', closed: false },
+    { dayOfWeek: 7, open: '',     close: '',     closed: true  }
+  ].map(h => ({ _id: `${branch}-${h.dayOfWeek}`, branch, ...h }));
+  await db.collection('hours').bulkWrite(upsertsFromArray(hours));
+
+  await ensureIndexes(db);
+
+  // quick counts
+  const counts = await Promise.all(
+    ['users','books','loans','hours'].map(async c => [c, await db.collection(c).countDocuments()])
+  );
+  console.log('✅ Seed complete:', Object.fromEntries(counts));
+}
+main().catch(e => { console.error('❌ Seed error:', e); })
+  .finally(() => client.close());

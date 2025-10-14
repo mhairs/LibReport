@@ -1,6 +1,7 @@
 {
   "devDependencies": {
     "@types/node": "^24.7.2",
+    "nodemon": "^3.1.10",
     "typescript": "^5.9.3"
   },
   "name": "libreport",
@@ -16,12 +17,12 @@
   },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "dev": "node db/db_connection.js",
+    "dev": "nodemon db/db_connection.js",
     "mongo:ping": "node db/db_connection.js",
     "mongo:seed": "node db/seed.js",
     "mongo:indexes": "node db/indexes.js",
     "mongo:check": "node db/check_data.js",
-    "api": "node -r dotenv/config src/server.js dotenv_config_path=./.env dotenv_config_silent=true"
+    "api": "nodemon src/server.js"
   },
   "keywords": [],
   "author": "",
