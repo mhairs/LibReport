@@ -1,0 +1,9 @@
+node_modules
+node_modules
+
+// example (paste into a quick script or use mongosh)
+db.collection('loans').aggregate([
+  { $group: { _id: '$bookId', borrows: { $sum: 1 } } },
+  { $sort: { borrows: -1 } },
+  { $limit: 5 }
+]);
