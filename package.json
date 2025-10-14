@@ -7,8 +7,11 @@
   "version": "1.0.0",
   "main": "db-ping.js",
   "dependencies": {
+    "cors": "^2.8.5",
     "dotenv": "^17.2.3",
+    "express": "^5.1.0",
     "mongodb": "^6.20.0",
+    "morgan": "^1.10.1",
     "undici-types": "^7.14.0"
   },
   "scripts": {
@@ -16,7 +19,9 @@
     "dev": "node db/db_connection.js",
     "mongo:ping": "node db/db_connection.js",
     "mongo:seed": "node db/seed.js",
-    "mongo:indexes": "node db/indexes.js"
+    "mongo:indexes": "node db/indexes.js",
+    "mongo:check": "node db/check_data.js",
+    "api": "node -r dotenv/config src/server.js dotenv_config_path=./.env dotenv_config_silent=true"
   },
   "keywords": [],
   "author": "",
