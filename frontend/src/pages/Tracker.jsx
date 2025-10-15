@@ -2,13 +2,17 @@ import React, { useState } from "react";
 import Sidebar from "../components/Sidebar";
 import "../styles/Tracker.css";
 import profileImage from "../assets/pfp.png";
+import { useNavigate } from "react-router-dom";
 
 const Tracker = () => {
   const [showDropdown, setShowDropdown] = useState(false);
+  const [showLogoutModal, setShowLogoutModal] = useState(false);
+  const navigate = useNavigate();
 
   const handleLogout = () => {
-    alert("Logged out!");
+    setShowLogoutModal(false);
     setShowDropdown(false);
+    navigate("/signin", { replace: true }); 
   };
 
   const logs = [
@@ -55,11 +59,11 @@ const Tracker = () => {
   ];
 
   return (
-    <div className="tracker-layout">
+    <div className="tracker-container">
       <Sidebar />
 
-      <main className="tracker-content">
-        <header className="tracker-header">
+      <main className="tracker-main">
+        <div className="reports-topbar">
           <div
             className="profile-container"
             onClick={() => setShowDropdown(!showDropdown)}
@@ -70,11 +74,11 @@ const Tracker = () => {
 
             {showDropdown && (
               <div className="profile-dropdown">
-                <button onClick={handleLogout}>Logout</button>
+                <button onClick={() => setShowLogoutModal(true)}>Logout</button>
               </div>
             )}
           </div>
-        </header>
+        </div>
 
         {/* Main Content */}
         <section className="tracker-card">
@@ -133,6 +137,30 @@ const Tracker = () => {
           </div>
         </section>
       </main>
+
+      
+      {showLogoutModal && (
+        <div className="modal-overlay">
+          <div className="modal-box pretty-modal">
+            <h3 className="modal-title-green">Are you sure you want to logout?</h3>
+
+            <div className="modal-actions center-actions">
+              <button
+                className="cancel-btn"
+                onClick={() => setShowLogoutModal(false)}
+              >
+                Close
+              </button>
+              <button
+                className="confirm-btn delete-btn"
+                onClick={handleLogout}
+              >
+                Confirm
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

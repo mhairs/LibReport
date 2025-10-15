@@ -17,12 +17,14 @@ import {
 const Dashboard = () => {
   const [showReport, setShowReport] = useState(false);
   const [showDropdown, setShowDropdown] = useState(false);
+  const [showLogoutModal, setShowLogoutModal] = useState(false);
   const navigate = useNavigate();
 
   const handleLogout = () => {
-    navigate("/login");
+    setShowLogoutModal(false);
+    setShowDropdown(false);
+    navigate("/signin", { replace: true });
   };
-
 
   const data = [
     { day: "Monday", value: 580 },
@@ -35,12 +37,12 @@ const Dashboard = () => {
   ];
 
   return (
-    <div className="dashboard-layout">
+    <div className="dashboard-container">
       <Sidebar />
 
-      <main className="dashboard-content">
-        {/* Header */}
-        <header className="dashboard-header">
+      <div className="dashboard-main">
+        {/* TOPBAR (Profile section) */}
+        <div className="dashboard-topbar">
           <div
             className="profile-container"
             onClick={() => setShowDropdown(!showDropdown)}
@@ -49,14 +51,13 @@ const Dashboard = () => {
               <img src={profileImage} alt="Profile" />
             </div>
 
-            {/* Dropdown menu */}
             {showDropdown && (
               <div className="profile-dropdown">
-                <button onClick={handleLogout}>Logout</button>
+                <button onClick={() => setShowLogoutModal(true)}>Logout</button>
               </div>
             )}
           </div>
-        </header>
+        </div>
 
         {/* Summary Cards */}
         <section className="summary-cards">
@@ -78,7 +79,7 @@ const Dashboard = () => {
           </div>
         </section>
 
-        {/* Chart Section*/}
+        {/* Chart Section */}
         <section className="chart-section">
           <h3>Usage Heatmaps</h3>
           <div className="chart-container">
@@ -117,7 +118,30 @@ const Dashboard = () => {
         </section>
 
         {showReport && <ReportModal onClose={() => setShowReport(false)} />}
-      </main>
+      </div>
+
+      {showLogoutModal && (
+        <div className="modal-overlay">
+          <div className="modal-box pretty-modal">
+            <h3 className="modal-title-green">Are you sure you want to logout?</h3>
+
+            <div className="modal-actions center-actions">
+              <button
+                className="cancel-btn"
+                onClick={() => setShowLogoutModal(false)}
+              >
+                Close
+              </button>
+              <button
+                className="confirm-btn delete-btn"
+                onClick={handleLogout}
+              >
+                Confirm
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

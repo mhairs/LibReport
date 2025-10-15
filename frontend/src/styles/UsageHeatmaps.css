@@ -1,16 +1,19 @@
-.heatmap-layout {
+.heatmap-container {
   display: flex;
   min-height: 100vh;
   background-color: #dcdcdc;
+  color: #333;
 }
 
-.heatmap-content {
+.heatmap-main {
   flex: 1;
-  margin-left: 240px;
+  margin-left: 220px;
   padding: 2rem;
-  background-color: #e5e5e5;
+  background: #dcdcdc;
+  overflow: visible;
+  position: relative;
+  box-sizing: border-box;
 }
-
 
 .heatmap-header {
   display: flex;
@@ -26,6 +29,14 @@
   color: #222;
 }
 
+.heatmap-topbar {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  padding: 15px 30px;
+  margin-bottom: 25px;
+  margin-left: 150px;
+}
 
 .profile-container {
   position: relative;
@@ -37,7 +48,7 @@
   height: 50px;
   border-radius: 50%;
   overflow: hidden;
-  background: #0077b6;
+  background: #4f6936;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -50,14 +61,18 @@
 }
 
 
-.profile-dropdown {
-  position: absolute;
-  top: 60px;
-  right: 0;
-  background: #fff;
-  border-radius: 6px;
-  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.25);
-  z-index: 10;
+.profile-dropdown button {
+  background: none;
+  border: none;
+  padding: 10px 20px;
+  cursor: pointer;
+  width: 100%;
+  text-align: center;
+  color: #333;
+  font-weight: 600;
+  display: flex;
+  justify-content: center; 
+  align-items: center; 
 }
 
 .profile-dropdown button {
@@ -76,12 +91,32 @@
 }
 
 
+
 .heatmap-card {
-  background-color: #fff;
+  background-color: #ffffff;
   border-radius: 6px;
-  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.3);
-  padding: 0;
-  overflow: hidden;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.15);
+  padding: 1rem 0;
+}
+
+.heatmap-card h2 {
+  font-weight: 700;
+  margin-bottom: 0.5rem;
+  color: #333;
+  margin-left: 25px;
+}
+
+.heatmap-divider {
+  border: none;
+  border-top: 2px solid #7f7f7f;
+}
+
+.heatmap-body-card {
+  background-color: #dcdcdc;
+  border-radius: 6px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+  margin: 1rem 1.5rem;
+  padding: 1rem;
 }
 
 
@@ -105,8 +140,9 @@
 
 
 .heatmap-controls select {
-  padding: 6px 10px;
+  padding: 10px 35px 10px 10px;
   border-radius: 6px;
+  border-color: #333;
   border: 1px solid #ccc;
   background-color: #fff;
   box-shadow: 1px 1px 3px rgba(0, 0, 0, 0.3);
@@ -116,7 +152,16 @@
   background-image: url("data:image/svg+xml;utf8,<svg fill='black' height='10' viewBox='0 0 24 24' width='10' xmlns='http://www.w3.org/2000/svg'><path d='M7 10l5 5 5-5z'/></svg>");
   background-repeat: no-repeat;
   background-position: right 10px center;
+  
 }
+
+
+.heatmap-controls select option[disabled] {
+  color: #777;
+  font-style: italic;
+}
+
+
 
 
 .chart-card {

@@ -2,16 +2,21 @@ import React, { useState } from "react";
 import Sidebar from "../components/Sidebar";
 import "../styles/Reports.css";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
-import profileImage from "../assets/pfp.png"; 
+import profileImage from "../assets/pfp.png";
+import { useNavigate } from "react-router-dom"; 
 
 const Reports = () => {
   const [timeRange, setTimeRange] = useState("Daily");
   const [reportType, setReportType] = useState("Usage Report");
   const [showDropdown, setShowDropdown] = useState(false);
+  const [showLogoutModal, setShowLogoutModal] = useState(false); 
+  const navigate = useNavigate(); 
 
+  
   const handleLogout = () => {
-    alert("Logged out!");
+    setShowLogoutModal(false);
     setShowDropdown(false);
+    navigate("/signin", { replace: true });
   };
 
   const data = [
@@ -30,7 +35,7 @@ const Reports = () => {
       <Sidebar />
 
       <div className="reports-main">
-        {/* TOPBAR (Profile section) */}
+
         <div className="reports-topbar">
           <div
             className="profile-container"
@@ -42,13 +47,13 @@ const Reports = () => {
 
             {showDropdown && (
               <div className="profile-dropdown">
-                <button onClick={handleLogout}>Logout</button>
+                <button onClick={() => setShowLogoutModal(true)}>Logout</button>
               </div>
             )}
           </div>
         </div>
 
-        {/* MAIN REPORT CONTENT */}
+        {/* Report Content */}
         <div className="report-content">
           <h2>Auto Reports</h2>
 
@@ -142,6 +147,29 @@ const Reports = () => {
           </div>
         </div>
       </div>
+      
+      {showLogoutModal && (
+        <div className="modal-overlay">
+          <div className="modal-box pretty-modal">
+            <h3 className="modal-title-green">Are you sure you want to logout?</h3>
+
+            <div className="modal-actions center-actions">
+              <button
+                className="cancel-btn"
+                onClick={() => setShowLogoutModal(false)}
+              >
+                Close
+              </button>
+              <button
+                className="confirm-btn delete-btn"
+                onClick={handleLogout}
+              >
+                Confirm
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

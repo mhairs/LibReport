@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Sidebar from "../components/Sidebar";
 import {
   LineChart,
@@ -11,15 +11,27 @@ import {
 } from "recharts";
 import "../styles/UsageHeatmaps.css";
 import profileImage from "../assets/pfp.png";
+import { useNavigate } from "react-router-dom";
 
 const UsageHeatmaps = () => {
-  const [timeRange, setTimeRange] = useState("Daily");
-  const [metric, setMetric] = useState("Books Borrowed");
+  const [timeRange, setTimeRange] = useState("");
+  const [metric, setMetric] = useState("");
   const [showDropdown, setShowDropdown] = useState(false);
+  const [chartRange, setChartRange] = useState("Daily");
+  const [showLogoutModal, setShowLogoutModal] = useState(false); 
+  const navigate = useNavigate(); 
 
+ 
   const handleLogout = () => {
-    console.log("User logged out");
+    setShowLogoutModal(false);
+    setShowDropdown(false);
+    navigate("/signin", { replace: true }); 
   };
+
+  useEffect(() => {
+    setTimeRange("");
+    setChartRange("Daily");
+  }, []);
 
   const dataSets = {
     Daily: [
@@ -47,17 +59,21 @@ const UsageHeatmaps = () => {
     ],
   };
 
-  const metrics = ["Active Users", "Books Borrowed", "Overdue Books"];
   const ranges = ["Daily", "Weekly", "Monthly"];
+  const metrics = ["Books Borrowed", "Overdue Books"];
+
+  const handleTimeRangeChange = (e) => {
+    const value = e.target.value;
+    setTimeRange(value);
+    setChartRange(value || "Daily");
+  };
 
   return (
-    <div className="heatmap-layout">
+    <div className="heatmap-container">
       <Sidebar />
 
-      <main className="heatmap-content">
-        <header className="heatmap-header">
-          <h2>Usage Heatmaps</h2>
-
+      <div className="heatmap-main">
+        <div className="heatmap-topbar">
           <div
             className="profile-container"
             onClick={() => setShowDropdown(!showDropdown)}
@@ -68,65 +84,95 @@ const UsageHeatmaps = () => {
 
             {showDropdown && (
               <div className="profile-dropdown">
-                <button onClick={handleLogout}>Logout</button>
+                <button onClick={() => setShowLogoutModal(true)}>Logout</button>
               </div>
             )}
           </div>
-        </header>
+        </div>
 
         <div className="heatmap-card">
-          <div className="heatmap-body">
-            <div className="heatmap-controls">
-              <div>
-                <label>Select Time Range:</label>
-                <select
-                  value={timeRange}
-                  onChange={(e) => setTimeRange(e.target.value)}
-                >
-                  {ranges.map((range) => (
-                    <option key={range} value={range}>
-                      {range}
+          <h2>Usage Heatmaps</h2>
+          <hr className="heatmap-divider" />
+
+          <div className="heatmap-body-card">
+            <div className="heatmap-body">
+              <div className="heatmap-controls">
+                <div>
+                  <select value={timeRange} onChange={handleTimeRangeChange}>
+                    <option value="" disabled>
+                      Select Time Range
                     </option>
-                  ))}
-                </select>
+                    {ranges.map((range) => (
+                      <option key={range} value={range}>
+                        {range}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <select
+                    value={metric}
+                    onChange={(e) => setMetric(e.target.value)}
+                  >
+                    <option value="" disabled>
+                      Metric
+                    </option>
+                    {metrics.map((m) => (
+                      <option key={m} value={m}>
+                        {m}
+                      </option>
+                    ))}
+                  </select>
+                </div>
               </div>
 
-              <div>
-                <label>Metric:</label>
-                <select
-                  value={metric}
-                  onChange={(e) => setMetric(e.target.value)}
-                >
-                  {metrics.map((m) => (
-                    <option key={m} value={m}>
-                      {m}
-                    </option>
-                  ))}
-                </select>
+              <div className="chart-card">
+                <ResponsiveContainer width="100%" height={300}>
+                  <LineChart data={dataSets[chartRange] || []}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="day" />
+                    <YAxis />
+                    <Tooltip />
+                    <Line
+                      type="monotone"
+                      dataKey="value"
+                      stroke="#ff0000"
+                      strokeWidth={2}
+                      dot={{ fill: "#000" }}
+                    />
+                  </LineChart>
+                </ResponsiveContainer>
               </div>
-            </div>
-
-        
-            <div className="chart-card">
-              <ResponsiveContainer width="100%" height={300}>
-                <LineChart data={dataSets[timeRange]}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="day" />
-                  <YAxis />
-                  <Tooltip />
-                  <Line
-                    type="monotone"
-                    dataKey="value"
-                    stroke="#ff0000"
-                    strokeWidth={2}
-                    dot={{ fill: "#000" }}
-                  />
-                </LineChart>
-              </ResponsiveContainer>
             </div>
           </div>
         </div>
-      </main>
+      </div>
+
+      {showLogoutModal && (
+        <div className="modal-overlay">
+          <div className="modal-box pretty-modal">
+            <h3 className="modal-title-green">
+              Are you sure you want to logout?
+            </h3>
+
+            <div className="modal-actions center-actions">
+              <button
+                className="cancel-btn"
+                onClick={() => setShowLogoutModal(false)}
+              >
+                Close
+              </button>
+              <button
+                className="confirm-btn delete-btn"
+                onClick={handleLogout}
+              >
+                Confirm
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
