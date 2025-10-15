@@ -1,8 +1,23 @@
 {
   "devDependencies": {
+<<<<<<< HEAD
     "@types/node": "^24.7.2",
     "nodemon": "^3.1.10",
     "typescript": "^5.9.3"
+=======
+    "autoprefixer": "^10.4.21",
+    "postcss": "^8.5.6",
+    "tailwindcss": "^4.1.14",
+    "tailwindscss": "^0.3.0"
+  },
+  "dependencies": {
+    "@fontsource/lora": "^5.2.8",
+    "@fontsource/merriweather": "^5.2.11",
+    "dotenv": "^17.2.3",
+    "mongodb": "^6.20.0",
+    "mongoose": "^8.19.1",
+    "react-router-dom": "^7.9.3"
+>>>>>>> frontend-v2
   },
   "name": "libreport",
   "version": "1.0.0",

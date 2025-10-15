@@ -1,0 +1,236 @@
+.material-page-container {
+  display: flex;
+  background-color: #2b2b2b;
+  min-height: 100vh;
+  font-family: "Merriweather", serif;
+}
+
+.material-page-main {
+  flex: 1;
+  margin-left: 220px;
+  padding: 2rem;
+  background: #dcdcdc;
+  position: relative;
+  box-sizing: border-box;
+}
+
+/* TOPBAR */
+.material-topbar {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  padding: 15px 30px;
+  margin-bottom: 25px;
+}
+
+.profile-container {
+  position: relative;
+  cursor: pointer;
+}
+
+.profile-circle {
+  width: 45px;
+  height: 45px;
+  border-radius: 50%;
+  overflow: hidden;
+  background: #4f6936;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.profile-circle img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* PROFILE DROPDOWN */
+.profile-dropdown {
+  position: absolute;
+  top: 55px;
+  right: 0;
+  background: #fff;
+  border-radius: 6px;
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.25);
+  z-index: 100;
+  width: 120px;
+  text-align: center;
+}
+
+.profile-dropdown button {
+  background: none;
+  border: none;
+  padding: 10px 0;
+  cursor: pointer;
+  width: 100%;
+  color: #333;
+  font-weight: 600;
+}
+
+.profile-dropdown button:hover {
+  background: #f0f0f0;
+}
+
+.material-card {
+  background-color: #ffffff;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
+  border: 1px solid #ccc;
+}
+
+.material-card h2 {
+  font-weight: 700;
+  color: #000;
+  margin-left: 25px;
+  margin-top: 15px;
+}
+
+.material-divider {
+  border: none;
+  border-top: 2px solid #a7a7a7;
+} 
+
+
+.material-body-card {
+  background-color: #efefef;
+  border-radius: 6px;
+  margin: 1rem 1.5rem;
+  padding: 0.1rem;
+}
+
+.material-info-card {
+  background-color: #ffffff;
+  border-radius: 8px;
+  padding: 1rem 1rem;
+  border: 1px solid #ccc;
+}
+
+/* BUTTON ROW */
+.button-row {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-bottom: 15px;
+}
+
+.button-row button {
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 600;
+  padding: 8px 16px;
+}
+
+.add-btn {
+  background: #4f6936;
+  color: white;
+}
+
+.edit-btn {
+  background: #E2B714;
+  color: white;
+}
+
+.delete-btn {
+  background: #d9534f;
+  color: white;
+}
+
+.delete-btn:hover {
+  background: #b52b27;
+}
+
+/* TABLE*/
+.user-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.user-table th {
+  background: #4f6936;
+  color: white;
+  padding: 10px;
+  text-align: left;
+}
+
+.user-table td {
+  padding: 8px;
+  border-bottom: 1px solid #ddd;
+}
+
+/*MODALS*/
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.modal-box {
+  background: #fff;
+  border-radius: 8px;
+  padding: 25px;
+  width: 320px;
+  box-shadow: 0px 4px 15px rgba(0, 0, 0, 0.3);
+}
+
+.modal-box.small {
+  width: 300px;
+}
+
+.modal-box h3 {
+  background: #4f6936;
+  color: white;
+  text-align: center;
+  padding: 10px;
+  border-radius: 6px;
+  margin-bottom: 15px;
+}
+
+.modal-box label {
+  display: block;
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+
+.modal-box input {
+  width: 100%;
+  padding: 8px;
+  border-radius: 4px;
+  border: 1px solid #ccc;
+  margin-bottom: 10px;
+}
+
+.modal-actions {
+  display: flex;
+  justify-content: space-between;
+}
+
+.save-btn {
+  background: #4f6936;
+  color: white;
+  border-radius: 5px;
+  border: none;
+  padding: 6px 12px;
+  cursor: pointer;
+}
+
+.delete-confirm-btn {
+  background: #d9534f;
+  color: white;
+  border-radius: 5px;
+  border: none;
+  padding: 6px 12px;
+  cursor: pointer;
+}
+
+.delete-confirm-btn:hover {
+  background: #b52b27;
+}

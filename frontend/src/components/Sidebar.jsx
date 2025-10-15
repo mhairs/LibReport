@@ -42,30 +42,36 @@ const Sidebar = () => {
           Reports
         </NavLink>
 
-        
         <div className="dropdown-section">
           <div
             className="dropdown-toggle"
             onClick={() => setIsAdminOpen(!isAdminOpen)}
           >
             <span>Admin Panel</span>
-            <span className="arrow">{isAdminOpen ? "▲" : "▼"}</span>
           </div>
 
           {isAdminOpen && (
             <div className="dropdown-links">
               <NavLink
-                to="/admin/user"
+                to="/usermanagement"
                 className={({ isActive }) => (isActive ? "active" : "")}
               >
                 User
               </NavLink>
 
+            
               <NavLink
-                to="/admin/material"
+                to="/materialmanagement"
                 className={({ isActive }) => (isActive ? "active" : "")}
               >
                 Material
+              </NavLink>
+
+              <NavLink
+                to="/booksmanagement"
+                className={({ isActive }) => (isActive ? "active" : "")}
+              >
+                Books Management
               </NavLink>
             </div>
           )}
