@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import logo from "../assets/logo.png";
 import "../styles/Auth.css";
+import api, { setAuthToken } from "../api";
 
 const SignUp = () => {
   const navigate = useNavigate();
@@ -30,14 +31,10 @@ const SignUp = () => {
     if (v) { setError(v); return; }
     try {
       setLoading(true);
-      const res = await fetch("/api/auth/signup", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(form)
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data?.error || "Signup failed");
-      navigate("/signin");
+      const { data } = await api.post('/auth/signup', form);
+      if (data?.token) setAuthToken(data.token);
+      try { localStorage.setItem('lr_user', JSON.stringify(data.user || {})); } catch {}
+      navigate("/dashboard");
     } catch (err) {
       setError(err.message);
     } finally {

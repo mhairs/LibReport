@@ -1,9 +1,10 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import Sidebar from "../components/Sidebar";
 import "../styles/Reports.css";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 import profileImage from "../assets/pfp.png";
 import { useNavigate } from "react-router-dom"; 
+import api from "../api";
 
 const Reports = () => {
   const [timeRange, setTimeRange] = useState("Daily");
@@ -15,20 +16,25 @@ const Reports = () => {
   
   const handleLogout = () => {
     setShowLogoutModal(false);
-    setShowDropdown(false);
+    setShowDropdown(false); try { localStorage.removeItem('lr_token'); try { localStorage.removeItem('lr_user'); } catch {} } catch {}
     navigate("/signin", { replace: true });
   };
 
-  const data = [
-    { time: "8AM–9AM", visits: 8 },
-    { time: "9AM–10AM", visits: 5 },
-    { time: "10AM–11AM", visits: 7 },
-    { time: "11AM–12PM", visits: 4 },
-    { time: "12PM–1PM", visits: 10 },
-    { time: "1PM–2PM", visits: 9 },
-    { time: "2PM–3PM", visits: 5 },
-    { time: "3PM–4PM", visits: 3 },
-  ];
+  const [summary, setSummary] = useState({ visits: 0, peak: 0 });
+  const [data, setData] = useState([]);
+
+  useEffect(() => {
+    api.get('/heatmap/visits', { params: { days: 1 } }).then(r => {
+      const items = r.data.items || [];
+      const hours = new Array(24).fill(0);
+      for (const it of items) hours[it.hour ?? 0] += it.count || 0;
+      const series = hours.map((v,h) => ({ time: `${h}:00`, visits: v }));
+      const total = hours.reduce((a,b)=>a+b,0);
+      const peak = Math.max(...hours);
+      setData(series);
+      setSummary({ visits: total, peak });
+    }).catch(()=>{});
+  }, []);
 
   return (
     <div className="reports-container">
@@ -101,11 +107,11 @@ const Reports = () => {
               <tbody>
                 <tr>
                   <td>Total Library Visits</td>
-                  <td>8</td>
+                  <td>{summary.visits}</td>
                 </tr>
                 <tr>
-                  <td>Peak Hours</td>
-                  <td>5</td>
+                  <td>Peak Hour Count</td>
+                  <td>{summary.peak}</td>
                 </tr>
               </tbody>
             </table>
@@ -175,3 +181,5 @@ const Reports = () => {
 };
 
 export default Reports;
+
+

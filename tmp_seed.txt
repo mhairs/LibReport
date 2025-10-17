@@ -1,4 +1,4 @@
-// db/seed.js
+﻿// db/seed.js
 const path = require('node:path');
 require('dotenv').config({ path: path.resolve(process.cwd(), '.env') });
 const { MongoClient } = require('mongodb');
@@ -84,7 +84,7 @@ async function main() {
   const counts = await Promise.all(
     ['users','books','loans','hours'].map(async c => [c, await db.collection(c).countDocuments()])
   );
-  console.log('✅ Seed complete:', Object.fromEntries(counts));
+  console.log('âœ… Seed complete:', Object.fromEntries(counts));
 }
-main().catch(e => { console.error('❌ Seed error:', e); })
+main().catch(e => { console.error('âŒ Seed error:', e); })
   .finally(() => client.close());

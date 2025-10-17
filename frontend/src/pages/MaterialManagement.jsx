@@ -1,8 +1,9 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import Sidebar from "../components/Sidebar";
 import "../styles/MaterialManagement.css";
 import pfp from "../assets/pfp.png";
 import { useNavigate } from "react-router-dom";
+import api from "../api";
 
 const MaterialManagement = () => {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
@@ -14,9 +15,7 @@ const MaterialManagement = () => {
   const [showLogoutModal, setShowLogoutModal] = useState(false);
   const navigate = useNavigate();
 
-  const [materials, setMaterials] = useState([
-    { id: 1, type: "Book", title: "The Art of Code", author: "John Doe", stock: 12 },
-  ]);
+  const [materials, setMaterials] = useState([]);
 
   const [formData, setFormData] = useState({
     type: "",
@@ -29,40 +28,65 @@ const MaterialManagement = () => {
     setFormData({ ...formData, [e.target.placeholder.toLowerCase()]: e.target.value });
   };
 
-  const handleAddBook = () => {
-    if (!formData.title || !formData.author || !formData.stock) return;
-    const newMaterial = {
-      id: materials.length + 1,
-      type: formData.type || "Book",
-      title: formData.title,
-      author: formData.author,
-      stock: parseInt(formData.stock),
-    };
-    setMaterials([...materials, newMaterial]);
-    setFormData({ type: "", title: "", author: "", stock: "" });
-    setIsAddModalOpen(false);
+  const loadBooks = async () => {
+    try {
+      const { data } = await api.get('/books');
+      const items = (data || []).map(b => ({
+        id: b._id || b.id,
+        type: (b.tags && b.tags[0]) || 'Book',
+        title: b.title,
+        author: b.author,
+        stock: b.availableCopies ?? b.totalCopies ?? 0,
+      }));
+      setMaterials(items);
+    } catch { setMaterials([]); }
   };
 
-  const handleEditBook = () => {
-    if (!selectedMaterial) return;
-    const updatedList = materials.map((m) =>
-      m.id === selectedMaterial.id ? { ...selectedMaterial, ...formData } : m
-    );
-    setMaterials(updatedList);
-    setIsEditModalOpen(false);
-    setFormData({ type: "", title: "", author: "", stock: "" });
+  useEffect(() => { loadBooks(); }, []);
+
+  const handleAddBook = async () => {
+    if (!formData.title || !formData.author) return;
+    try {
+      const body = {
+        title: formData.title,
+        author: formData.author,
+        tags: formData.type ? [formData.type] : [],
+        totalCopies: Number(formData.stock || 1),
+      };
+      await api.post('/books', body);
+      setFormData({ type: "", title: "", author: "", stock: "" });
+      setIsAddModalOpen(false);
+      await loadBooks();
+    } catch (e) {}
   };
 
-  const handleRemoveBook = () => {
+  const handleEditBook = async () => {
     if (!selectedMaterial) return;
-    setMaterials(materials.filter((m) => m.id !== selectedMaterial.id));
+    try {
+      const body = {
+        title: formData.title || selectedMaterial.title,
+        author: formData.author || selectedMaterial.author,
+        tags: formData.type ? [formData.type] : undefined,
+        totalCopies: formData.stock ? Number(formData.stock) : undefined,
+      };
+      await api.patch(`/books/${selectedMaterial.id}`, body);
+      setIsEditModalOpen(false);
+      setFormData({ type: "", title: "", author: "", stock: "" });
+      await loadBooks();
+    } catch (e) {}
+  };
+
+  const handleRemoveBook = async () => {
+    if (!selectedMaterial) return;
+    try { await api.delete(`/books/${selectedMaterial.id}`); } catch (e) {}
     setIsDeleteModalOpen(false);
     setSelectedMaterial(null);
+    await loadBooks();
   };
 
   const handleLogout = () => {
     setShowLogoutModal(false);
-    setIsDropdownOpen(false);
+    setIsDropdownOpen(false); try { localStorage.removeItem('lr_token'); try { localStorage.removeItem('lr_user'); } catch {} } catch {}
     navigate("/signin", { replace: true });
   };
 
@@ -273,3 +297,5 @@ const MaterialManagement = () => {
 };
 
 export default MaterialManagement;
+
+

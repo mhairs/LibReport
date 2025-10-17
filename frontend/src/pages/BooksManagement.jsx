@@ -1,29 +1,13 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import Sidebar from "../components/Sidebar";
 import "../styles/BooksManagement.css";
 import pfp from "../assets/pfp.png";
 import { useNavigate } from "react-router-dom";
+import api from "../api";
 
 const BooksManagement = () => {
   const [openDropdown, setOpenDropdown] = useState(null);
-  const [books, setBooks] = useState([
-    {
-      id: 1,
-      title: "Data Structures & Algorithms",
-      student: "Mhairs Cambay",
-      borrowed: "September 25, 2025",
-      due: "October 15, 2025",
-      status: "On Time",
-    },
-    {
-      id: 2,
-      title: "Introduction to Programming",
-      student: "Izzy Lasala",
-      borrowed: "September 12, 2025",
-      due: "October 9, 2025",
-      status: "Overdue",
-    },
-  ]);
+  const [books, setBooks] = useState([]);
 
   const [activeModal, setActiveModal] = useState(null);
   const [selectedBook, setSelectedBook] = useState(null);
@@ -41,6 +25,25 @@ const BooksManagement = () => {
   const toggleDropdown = (id) => {
     setOpenDropdown(openDropdown === id ? null : id);
   };
+
+  const loadActiveLoans = async () => {
+    try {
+      const { data } = await api.get('/loans/active');
+      const items = (data.items || []).map((it) => ({
+        id: it._id,
+        title: it.title,
+        student: it.student,
+        borrowed: it.borrowedAt ? new Date(it.borrowedAt).toLocaleDateString(undefined, { year:'numeric', month:'long', day:'numeric' }) : '-',
+        due: it.dueAt ? new Date(it.dueAt).toLocaleDateString(undefined, { year:'numeric', month:'long', day:'numeric' }) : '-',
+        status: it.status || 'On Time',
+      }));
+      setBooks(items);
+    } catch (e) {
+      setBooks([]);
+    }
+  };
+
+  useEffect(() => { loadActiveLoans(); }, []);
 
   const handleAction = (action, book) => {
     setSelectedBook(book);
@@ -66,12 +69,11 @@ const BooksManagement = () => {
     setSelectedBook(null);
   };
 
-  const confirmReturn = () => {
-    setBooks((prevBooks) =>
-      prevBooks.map((b) =>
-        b.id === selectedBook.id ? { ...b, status: "Returned" } : b
-      )
-    );
+  const confirmReturn = async () => {
+    try {
+      await api.post('/loans/return', { loanId: selectedBook.id });
+      await loadActiveLoans();
+    } catch (e) { /* ignore for now */ }
     closeModal();
   };
 

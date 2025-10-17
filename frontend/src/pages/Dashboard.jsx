@@ -1,9 +1,10 @@
-import React, { useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import "../styles/Dashboard.css";
 import Sidebar from "../components/Sidebar";
 import ReportModal from "../components/GenReports";
 import profileImage from "../assets/pfp.png";
 import { useNavigate } from "react-router-dom";
+import api from "../api";
 import {
   LineChart,
   Line,
@@ -22,19 +23,32 @@ const Dashboard = () => {
 
   const handleLogout = () => {
     setShowLogoutModal(false);
-    setShowDropdown(false);
+    setShowDropdown(false); try { localStorage.removeItem('lr_token'); try { localStorage.removeItem('lr_user'); } catch {} } catch {}
     navigate("/signin", { replace: true });
   };
 
-  const data = [
-    { day: "Monday", value: 580 },
-    { day: "Tuesday", value: 420 },
-    { day: "Wednesday", value: 150 },
-    { day: "Thursday", value: 90 },
-    { day: "Friday", value: 210 },
-    { day: "Saturday", value: 380 },
-    { day: "Sunday", value: 100 },
-  ];
+  const [counts, setCounts] = useState({ users: 0, books: 0, activeLoans: 0, visitsToday: 0, overdue: 0 });
+  const [topBooks, setTopBooks] = useState([]);
+  const [heat, setHeat] = useState([]);
+
+  useEffect(() => {
+    // Load dashboard summary
+    api.get('/dashboard').then(r => setCounts(c => ({ ...c, ...r.data.counts }))).catch(() => {});
+    api.get('/reports/top-books').then(r => setTopBooks(r.data.items || [])).catch(() => {});
+    api.get('/heatmap/visits', { params: { days: 7 } }).then(r => setHeat(r.data.items || [])).catch(() => {});
+    api.get('/reports/overdue').then(r => setCounts(c => ({ ...c, overdue: (r.data.items || []).length })) ).catch(() => {});
+  }, []);
+
+  const chartData = useMemo(() => {
+    const names = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+    const sums = new Array(7).fill(0);
+    for (const row of heat) {
+      // dow from Mongo $dayOfWeek is 1..7 (Sun..Sat)
+      const idx = (row.dow ?? 1) - 1;
+      sums[idx] += row.count || 0;
+    }
+    return names.map((name, i) => ({ day: name, value: sums[i] }));
+  }, [heat]);
 
   return (
     <div className="dashboard-container">
@@ -63,19 +77,19 @@ const Dashboard = () => {
         <section className="summary-cards">
           <div className="card yellow">
             <h3>Total Books</h3>
-            <p className="count">25</p>
+            <p className="count">{counts.books}</p>
           </div>
           <div className="card green">
             <h3>Books Borrowed</h3>
-            <p className="count">5</p>
+            <p className="count">{counts.activeLoans}</p>
           </div>
           <div className="card red">
             <h3>Overdue Books</h3>
-            <p className="count">4</p>
+            <p className="count">{counts.overdue}</p>
           </div>
           <div className="card blue">
             <h3>Active Users</h3>
-            <p className="count">15</p>
+            <p className="count">{counts.users}</p>
           </div>
         </section>
 
@@ -84,7 +98,7 @@ const Dashboard = () => {
           <h3>Usage Heatmaps</h3>
           <div className="chart-container">
             <ResponsiveContainer width="100%" height={300}>
-              <LineChart data={data}>
+              <LineChart data={chartData}>
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis dataKey="day" />
                 <YAxis />
@@ -114,6 +128,11 @@ const Dashboard = () => {
           </div>
           <div className="report-card">
             <h3>Popular Books</h3>
+            <ul>
+              {topBooks.slice(0,5).map((b) => (
+                <li key={b.bookId || b.title}>{b.title} — {b.author} ({b.borrows})</li>
+              ))}
+            </ul>
           </div>
         </section>
 
@@ -147,3 +166,5 @@ const Dashboard = () => {
 };
 
 export default Dashboard;
+
+

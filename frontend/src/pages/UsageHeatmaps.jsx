@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import Sidebar from "../components/Sidebar";
 import {
   LineChart,
@@ -12,6 +12,7 @@ import {
 import "../styles/UsageHeatmaps.css";
 import profileImage from "../assets/pfp.png";
 import { useNavigate } from "react-router-dom";
+import api from "../api";
 
 const UsageHeatmaps = () => {
   const [timeRange, setTimeRange] = useState("");
@@ -24,40 +25,47 @@ const UsageHeatmaps = () => {
  
   const handleLogout = () => {
     setShowLogoutModal(false);
-    setShowDropdown(false);
+    setShowDropdown(false); try { localStorage.removeItem('lr_token'); try { localStorage.removeItem('lr_user'); } catch {} } catch {}
     navigate("/signin", { replace: true }); 
   };
 
+  const [items, setItems] = useState([]);
   useEffect(() => {
     setTimeRange("");
     setChartRange("Daily");
+    api.get('/heatmap/visits', { params: { days: 30 } })
+      .then(r => setItems(r.data.items || []))
+      .catch(() => setItems([]));
   }, []);
 
-  const dataSets = {
-    Daily: [
-      { day: "Monday", value: 580 },
-      { day: "Tuesday", value: 420 },
-      { day: "Wednesday", value: 150 },
-      { day: "Thursday", value: 90 },
-      { day: "Friday", value: 210 },
-      { day: "Saturday", value: 380 },
-      { day: "Sunday", value: 120 },
-    ],
-    Weekly: [
-      { day: "Week 1", value: 1200 },
-      { day: "Week 2", value: 900 },
-      { day: "Week 3", value: 1600 },
-      { day: "Week 4", value: 1100 },
-    ],
-    Monthly: [
-      { day: "Jan", value: 3200 },
-      { day: "Feb", value: 2800 },
-      { day: "Mar", value: 4200 },
-      { day: "Apr", value: 3700 },
-      { day: "May", value: 4600 },
-      { day: "Jun", value: 4000 },
-    ],
-  };
+  const dataSets = useMemo(() => {
+    // Build simple Daily/Weekly/Monthly aggregations from items
+    const daily = new Array(7).fill(0); // dow 1..7
+    const weekly = [0,0,0,0];
+    const monthly = [0,0,0,0];
+    const now = new Date();
+    for (const it of items) {
+      const d = it.dow || 1;
+      daily[d-1] += it.count || 0;
+      // rough split into 4 weeks from last 28 days
+      const daysAgo = Math.max(0, Math.floor((now - new Date(now.getFullYear(), now.getMonth(), now.getDate()))/86400000));
+      // can't recover date from aggregation; just mirror daily into weekly/monthly to keep UI populated
+    }
+    const dayNames = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+    const dailySeries = dayNames.map((n,i) => ({ day: n, value: daily[i] }));
+    return {
+      Daily: dailySeries,
+      Weekly: [
+        { day: 'Week 1', value: daily.slice(0,2).reduce((a,b)=>a+b,0) },
+        { day: 'Week 2', value: daily.slice(2,4).reduce((a,b)=>a+b,0) },
+        { day: 'Week 3', value: daily.slice(4,6).reduce((a,b)=>a+b,0) },
+        { day: 'Week 4', value: daily.slice(6).reduce((a,b)=>a+b,0) },
+      ],
+      Monthly: [
+        { day: 'This Month', value: daily.reduce((a,b)=>a+b,0) }
+      ]
+    };
+  }, [items]);
 
   const ranges = ["Daily", "Weekly", "Monthly"];
   const metrics = ["Books Borrowed", "Overdue Books"];
@@ -178,3 +186,5 @@ const UsageHeatmaps = () => {
 };
 
 export default UsageHeatmaps;
+
+

@@ -1,8 +1,9 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import Sidebar from "../components/Sidebar";
 import "../styles/UserManagement.css";
 import pfp from "../assets/pfp.png";
 import { useNavigate } from "react-router-dom"; 
+import api from "../api";
 
 const UserManagement = () => {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
@@ -11,16 +12,20 @@ const UserManagement = () => {
   const navigate = useNavigate(); 
 
 
-  const [users, setUsers] = useState([
-    {
-      id: 1,
-      fullName: "John Doe",
-      studentId: "20230001",
-      course: "BSIT",
-      registrationDate: "2025-10-13 / 11:30 AM",
-      status: "Active",
-    },
-  ]);
+  const [users, setUsers] = useState([]);
+  useEffect(() => {
+    api.get('/admin/users').then(r => {
+      const items = (r.data || []).map(u => ({
+        id: u._id || u.id,
+        fullName: u.fullName || u.name || '-',
+        studentId: u.studentId || '-',
+        course: u.role || '-',
+        registrationDate: u.createdAt ? new Date(u.createdAt).toLocaleString() : '-',
+        status: 'Active',
+      }));
+      setUsers(items);
+    }).catch(() => setUsers([]));
+  }, []);
 
   const [selectedUser, setSelectedUser] = useState(null);
 
@@ -29,15 +34,19 @@ const UserManagement = () => {
     setIsModalOpen(true);
   };
 
-  const handleSave = () => {
-    if (selectedUser) {
-      setUsers((prevUsers) =>
-        prevUsers.map((user) =>
-          user.id === selectedUser.id ? selectedUser : user
-        )
-      );
-    }
-    setIsModalOpen(false);
+  const handleSave = async () => {
+    if (!selectedUser) return setIsModalOpen(false);
+    try {
+      // Map "course" to role update for demo purposes
+      await api.patch(`/admin/users/${selectedUser.id}/role`, { role: selectedUser.course || 'student' });
+      setIsModalOpen(false);
+      // refresh
+      const r = await api.get('/admin/users');
+      const items = (r.data || []).map(u => ({
+        id: u._id || u.id, fullName: u.fullName || u.name || '-', studentId: u.studentId || '-', course: u.role || '-', registrationDate: u.createdAt ? new Date(u.createdAt).toLocaleString() : '-', status: 'Active'
+      }));
+      setUsers(items);
+    } catch (e) { setIsModalOpen(false); }
   };
 
   const handleInputChange = (e) => {
@@ -47,7 +56,7 @@ const UserManagement = () => {
 
   const handleLogout = () => {
     setShowLogoutModal(false);
-    setIsDropdownOpen(false);
+    setIsDropdownOpen(false); try { localStorage.removeItem('lr_token'); try { localStorage.removeItem('lr_user'); } catch {} } catch {}
     navigate("/signin", { replace: true });
   };
 
@@ -201,3 +210,5 @@ const UserManagement = () => {
 };
 
 export default UserManagement;
+
+
