@@ -1,18 +1,14 @@
-import dotenv from 'dotenv';
-import path from 'node:path';
-// Load env from backend/.env, fall back to repo root .env
-dotenv.config();
-if (!process.env.MONGO_URI && !process.env.MONGODB_URI) {
-  dotenv.config({ path: path.resolve(process.cwd(), '..', '.env') });
-}
-import express from 'express';
-import mongoose from 'mongoose';
-import morgan from 'morgan';
-import cors from 'cors';
-import jwt from 'jsonwebtoken';
-import bcrypt from 'bcryptjs';
-import validator from 'validator';
-import crypto from 'node:crypto';
+const path = require('node:path');
+require('dotenv').config({ path: path.join(__dirname, '.env') });
+require('dotenv').config({ path: path.join(__dirname, '..', '.env'), override: false });
+const express = require('express');
+const mongoose = require('mongoose');
+const morgan = require('morgan');
+const cors = require('cors');
+const jwt = require('jsonwebtoken');
+const bcrypt = require('bcryptjs');
+const validator = require('validator');
+const crypto = require('node:crypto');
 
 const app = express();
 app.use(cors());
@@ -27,8 +23,19 @@ if (!MONGO_URI) {
   console.error('Missing MONGO_URI in environment');
   process.exit(1);
 }
-await mongoose.connect(MONGO_URI, { dbName: DB_NAME });
-console.log(`MongoDB connected to database "${DB_NAME}"`);
+(async () => {
+  try {
+    await mongoose.connect(MONGO_URI, {
+      dbName: DB_NAME,
+      serverSelectionTimeoutMS: 10000,
+      family: 4
+    });
+    console.log(`MongoDB connected to database "${DB_NAME}"`);
+  } catch (err) {
+    console.error('Failed to connect to MongoDB:', err.message);
+    process.exit(1);
+  }
+})();
 
 // --- User model
 const userSchema = new mongoose.Schema(

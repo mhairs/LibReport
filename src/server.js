@@ -32,7 +32,9 @@ app.get('/health', (_req, res) => res.json({ ok: true }));
 app.use((req, res, next) => {
   if (req.method !== 'GET') return next();
   const accept = String(req.headers.accept || '');
-  if (req.path.startsWith('/api') || !accept.includes('text/html')) return next();
+  const hasExt = path.extname(req.path) !== '';
+  // Only serve index.html for SPA route navigations (no extension)
+  if (req.path.startsWith('/api') || !accept.includes('text/html') || hasExt) return next();
   res.sendFile(path.join(webRoot, 'index.html'));
 });
 
