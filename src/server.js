@@ -3,6 +3,8 @@ const path = require('node:path');
 require('dotenv').config({ path: path.resolve(process.cwd(), '.env'), override: true });
 
 const express = require('express');
+const fs = require('node:fs');
+const { createProxyMiddleware } = require('http-proxy-middleware');
 const morgan = require('morgan');
 const cors = require('cors');
 const { MongoClient } = require('mongodb');
@@ -16,7 +18,6 @@ const uri = process.env.MONGO_URI || process.env.MONGODB_URI;
 if (!uri) { console.error('Missing MONGO_URI in .env'); process.exit(1); }
 const dbName = process.env.DB_NAME || 'libreport';
 const JWT_SECRET = process.env.JWT_SECRET || 'dev-secret';
-const APP_URL = process.env.APP_URL || 'http://localhost:3000';
 const isProd = process.env.NODE_ENV === 'production';
 
 const client = new MongoClient(uri);
@@ -76,10 +77,18 @@ async function start() {
   app.use(cors());
   app.use(express.json());
   app.use(morgan('dev'));
-  app.use(express.static('public')); // optional dashboard static files
+  // Serve frontend static files from React build if available, otherwise public
+  const webRootBuild = path.resolve(process.cwd(), 'frontend', 'build');
+  const webRootPublic = path.resolve(process.cwd(), 'frontend', 'public');
+  const webRoot = fs.existsSync(webRootBuild) ? webRootBuild : webRootPublic;
+  app.use(express.static(webRoot));
 
   // simple global rate limit
   app.use(rateLimit({ windowMs: 60_000, max: 120 }));
+
+  // Proxy API calls to dedicated backend (keeps frontend server simple)
+  const backendTarget = process.env.BACKEND_URL || `http://localhost:${process.env.BACKEND_PORT || 4000}`;
+  app.use('/api', createProxyMiddleware({ target: backendTarget, changeOrigin: true, logLevel: 'warn' }));
 
   // --- Health
   app.get('/health', (_req, res) => res.json({ ok: true }));
@@ -152,9 +161,9 @@ async function start() {
       };
       await db.collection('password_resets').insertOne(reset);
 
-      const resetUrl = `${APP_URL}/reset-password?uid=${encodeURIComponent(reset.userId)}&token=${token}`;
-      if (!isProd) console.log('🔐 Password reset URL:', resetUrl);
-      // In production you’d email resetUrl. For dev we return it to help you test:
+      const resetUrl = `http://localhost:${process.env.PORT || 3000}/reset-password?uid=${encodeURIComponent(reset.userId)}&token=${token}`;
+      if (!isProd) console.log('Password reset URL:', resetUrl);
+      // In production you'd email resetUrl. For dev we return it to help you test:
       if (!isProd) return res.json({ ok: true, resetUrl });
     }
     res.json({ ok: true });
@@ -194,7 +203,7 @@ async function start() {
     res.json({ id: req.user.sub, name: user?.name, role: user?.role, email: user?.email, barcode: user?.barcode });
   });
 
-  // --- VISIT: enter-only via barcode (from earlier)
+  // --- VISIT: enter-only via barcode
   app.post('/visit/enter', async (req, res) => {
     const { barcode, branch = 'Main' } = req.body || {};
     if (!barcode) return res.status(400).json({ error: 'barcode required' });
@@ -211,7 +220,7 @@ async function start() {
     res.json({ ok: true, user: { id: user._id, name: user.name }, enteredAt: (dupe?.enteredAt || now), deduped: !!dupe });
   });
 
-  // --- Reports you already had (top-books, overdue, hours, browse, borrowed) ---
+  // --- Reports (top-books, overdue, hours, browse, borrowed) ---
   app.get('/reports/top-books', async (_req, res) => {
     const data = await db.collection('loans').aggregate([
       { $group: { _id: '$bookId', borrows: { $sum: 1 } } },
@@ -260,7 +269,15 @@ async function start() {
   });
 
   const PORT = process.env.PORT || 3000;
-  app.listen(PORT, () => console.log(`✅ API listening on ${APP_URL.replace(/\/$/,'') || 'http://localhost:3000'}`));
+  // SPA fallback: let React Router handle unknown paths
+  app.get('*', (req, res) => {
+    // Avoid catching API routes defined above
+    // If a file exists (e.g., asset), static middleware will serve it before this point
+    res.sendFile(path.join(webRoot, 'index.html'));
+  });
+  app.listen(PORT, () => {
+    console.log(`API + Frontend served on http://localhost:${PORT}`);
+  });
 }
 
 start().catch(err => { console.error('Server failed:', err); process.exit(1); });
