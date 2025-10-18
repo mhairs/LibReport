@@ -2,9 +2,8 @@
 const path = require('node:path');
 require('dotenv').config({ path: path.resolve(process.cwd(), '.env') });
 const { MongoClient } = require('mongodb');
-
-const uri = process.env.MONGO_URI || process.env.MONGODB_URI;
-const dbName = process.env.DB_NAME || 'libreport';
+const { resolveMongoConfig } = require('../db/uri');
+const { uri, dbName } = resolveMongoConfig();
 
 (async () => {
   const client = new MongoClient(uri);

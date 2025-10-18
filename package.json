@@ -1,38 +1,43 @@
 {
-  "name": "libreport",
-  "version": "1.0.0",
-  "description": "",
-  "license": "ISC",
-  "dependencies": {
-    "bcryptjs": "^3.0.2",
-    "cors": "^2.8.5",
-    "dotenv": "^17.2.3",
-    "express": "^5.1.0",
-    "express-rate-limit": "^8.1.0",
-    "http-proxy-middleware": "^3.0.3",
-    "jsonwebtoken": "^9.0.2",
-    "mongoose": "^8.7.0",
-    "mongodb": "^6.20.0",
-    "morgan": "^1.10.1",
-    "validator": "^13.15.15"
-  },
-  "devDependencies": {
-    "@types/node": "^24.8.1",
-    "nodemon": "^3.1.10",
-    "concurrently": "^9.0.0"
-  },
-  "scripts": {
-    "start": "node src/server.js",
-    "dev": "node --watch src/server.js",
-    "backend": "node backend/server.js",
-    "backend:dev": "node --watch backend/server.js",
-    "dev:all": "concurrently -k -n api,web -c yellow,cyan \"node --watch backend/server.js\" \"node --watch src/server.js\"",
-    "frontend:build": "npm --prefix frontend run build",
-    "mongo:ping": "node backend/scripts/db_connection.js",
-    "mongo:seed": "node backend/scripts/seed.js",
-    "mongo:indexes": "node backend/scripts/indexes.js",
-    "mongo:check": "node backend/scripts/check_data.js"
-  },
-  "keywords": [],
-  "author": ""
+    "name":  "libreport",
+    "version":  "1.0.0",
+    "description":  "",
+    "license":  "ISC",
+    "dependencies":  {
+                         "bcryptjs":  "^3.0.2",
+                         "cors":  "^2.8.5",
+                         "dotenv":  "^17.2.3",
+                         "express":  "^5.1.0",
+                         "express-rate-limit":  "^8.1.0",
+                         "http-proxy-middleware":  "^3.0.3",
+                         "jsonwebtoken":  "^9.0.2",
+                         "mongoose":  "^8.7.0",
+                         "mongodb":  "^6.20.0",
+                         "morgan":  "^1.10.1",
+                         "validator":  "^13.15.15"
+                     },
+    "devDependencies":  {
+                            "@types/node":  "^24.8.1",
+                            "nodemon":  "^3.1.10",
+                            "concurrently":  "^9.0.0"
+                        },
+    "scripts":  {
+                    "start":  "node src/server.js",
+                    "dev":  "node --watch src/server.js",
+                    "backend":  "node backend/server.js",
+                    "backend:dev":  "node --watch backend/server.js",
+                    "dev:all":  "concurrently -k -n api,web -c yellow,cyan \"node --watch backend/server.js\" \"node --watch src/server.js\"",
+                    "dev:cra":  "concurrently -k -n api,web -c yellow,cyan \"node --watch backend/server.js\" \"npm --prefix frontend start\"",
+                    "frontend:build":  "npm --prefix frontend run build",
+                    "mongo:ping":  "node backend/scripts/db_connection.js",
+                    "mongo:seed":  "node backend/scripts/seed.js",
+                    "mongo:indexes":  "node backend/scripts/indexes.js",
+                    "mongo:check":  "node backend/scripts/check_data.js",
+                    "test:auth":  "node scripts/test-auth.js",
+                    "admin:set-password": "node scripts/set-admin-password.js"
+                },
+    "keywords":  [
+
+                 ],
+    "author":  ""
 }

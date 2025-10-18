@@ -21,3 +21,9 @@ Local Development
   - Frontend: `GET http://localhost:3000/health`
   - DB ping: `node db-ping.js` or `npm run mongo:ping`
 
+- MongoDB connection tips
+  - Prefer copying the full connection string from MongoDB Atlas/Compass into `.env` as `MONGO_URI=` (or `MONGODB_URI=`).
+  - If your DB user password has special characters (e.g., `@` or `!`), URL-encode it or use the string Compass provides.
+  - If your user is created in the `admin` database, add `?authSource=admin` to your URI.
+  - For self-managed/non-SRV hosts, you can also use parts instead of a URI:
+    - `MONGO_HOST=localhost`, `MONGO_PORT=27017`, `MONGO_DB=libreport`, optionally `MONGO_USER`, `MONGO_PASS`, `MONGO_AUTH_DB=admin`.

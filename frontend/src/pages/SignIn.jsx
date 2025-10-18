@@ -21,7 +21,9 @@ const SignIn = () => {
       try { localStorage.setItem('lr_user', JSON.stringify(data.user || {})); } catch {}
       navigate("/dashboard");
     } catch (err) {
-      setError(err?.response?.data?.error || 'Login failed');
+      const status = err?.response?.status;
+      const msg = err?.response?.data?.error || 'Login failed';
+      setError(status === 404 ? 'Service temporarily unavailable. Please try again.' : msg);
     } finally { setLoading(false); }
   };
 

@@ -2,9 +2,8 @@
 const path = require('node:path');
 require('dotenv').config({ path: path.resolve(process.cwd(), '.env') });
 const { MongoClient, ObjectId } = require('mongodb');
-
-const uri = process.env.MONGO_URI || process.env.MONGODB_URI;
-const dbName = process.env.DB_NAME || 'libreport';
+const { resolveMongoConfig } = require('../db/uri');
+const { uri, dbName } = resolveMongoConfig();
 if (!uri) throw new Error('MONGO_URI not set');
 
 const client = new MongoClient(uri);
@@ -42,7 +41,8 @@ async function main() {
     await db.collection(name).deleteMany({});
   }
 
-  const demoHash = '$2a$10$k7H5dQb7h0TtJr0cM2bqUu5r1tXWg3m0p2Qw7Ylq5L6Y2d8y9zF9S'; // bcrypt for "Password123"
+  // bcrypt hash for "Password123" (cost 10)
+  const demoHash = '$2b$10$vr7A1FNcgAQR/PmKzjVfMuCUWccdXVQqeA9M8I/VeEiFxLzAVtYoO';
   const userDocs = [
     { _id: new ObjectId(), studentId: '10001', name: 'Alice Student', fullName: 'Alice Student', role: 'student', email: 'alice@example.edu', barcode: 'A001', passwordHash: demoHash },
     { _id: new ObjectId(), studentId: '10002', name: 'Bob Student',   fullName: 'Bob Student',   role: 'student', email: 'bob@example.edu',   barcode: 'B002', passwordHash: demoHash },

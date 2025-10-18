@@ -16,11 +16,11 @@ app.use(express.json());
 app.use(morgan('dev'));
 
 // --- DB connect
-const MONGO_URI = process.env.MONGO_URI || process.env.MONGODB_URI;
-const DB_NAME = process.env.DB_NAME || 'libreport';
+const { resolveMongoConfig } = require('./db/uri');
+const { uri: MONGO_URI, dbName: DB_NAME } = resolveMongoConfig();
 const JWT_SECRET = process.env.JWT_SECRET || 'dev-secret';
 if (!MONGO_URI) {
-  console.error('Missing MONGO_URI in environment');
+  console.error('Missing MONGO_URI (or MONGODB_URI) in environment');
   process.exit(1);
 }
 (async () => {
@@ -32,7 +32,9 @@ if (!MONGO_URI) {
     });
     console.log(`MongoDB connected to database "${DB_NAME}"`);
   } catch (err) {
-    console.error('Failed to connect to MongoDB:', err.message);
+    const code = err && (err.code || err.codeName || err.name);
+    console.error('Failed to connect to MongoDB:', code ? `${code}: ${err.message}` : err.message);
+    console.error('Tip: If using Atlas/Compass, ensure your password is URL-encoded and add authSource=admin if needed.');
     process.exit(1);
   }
 })();
@@ -46,8 +48,9 @@ const userSchema = new mongoose.Schema(
       unique: true,
       trim: true,
       validate: {
-        validator: v => /^[0-9]+$/.test(v), // digits only
-        message: 'Student ID must contain numbers only'
+        // Format: 03-2324-032246 (2-4-6 digits with hyphens)
+        validator: v => /^\d{2}-\d{4}-\d{6}$/.test(v),
+        message: 'Student ID must match 00-0000-000000'
       }
     },
     email: {
@@ -61,24 +64,28 @@ const userSchema = new mongoose.Schema(
         message: 'Email must be a valid address'
       }
     },
+    // Some existing collections may expect a `name` field; keep both.
+    name: { type: String, trim: true },
     fullName: {
       type: String,
       required: true,
       trim: true,
       validate: {
-        validator: v => /^[A-Za-z ]+$/.test(v), // letters and spaces only
-        message: 'Full name must contain letters and spaces only'
+        // Allow letters, spaces, periods, apostrophes, and hyphens
+        validator: v => /^[A-Za-z .'-]+$/.test(v),
+        message: "Full name may contain letters, spaces, apostrophes, hyphens, and periods only"
       }
     },
     barcode: { type: String, trim: true, unique: true, sparse: true },
     passwordHash: { type: String, required: true },
-    role: { type: String, default: 'student' }
+    role: { type: String, enum: ['admin','librarian','faculty','student','viewer'], default: 'student' },
+    status: { type: String, enum: ['active','disabled','pending'], default: 'active' }
   },
   { timestamps: true }
 );
 
-userSchema.index({ email: 1 }, { unique: true });
-userSchema.index({ studentId: 1 }, { unique: true });
+// Field-level unique indexes are already defined on email and studentId.
+// Avoid duplicating them with schema.index() to prevent Mongoose warnings.
 
 const User = mongoose.model('User', userSchema);
 
@@ -160,6 +167,28 @@ app.get('/api/health', async (_req, res) => {
   return res.status(dbReady ? 200 : 500).json({ ok: dbReady, time: new Date().toISOString() });
 });
 
+// API root index for human checks
+app.get(['/api', '/api/'], (_req, res) => {
+  res.json({
+    ok: true,
+    name: 'LibReport API',
+    health: '/api/health',
+    auth: {
+      signup: { method: 'POST', path: '/api/auth/signup' },
+      login: { method: 'POST', path: '/api/auth/login' }
+    },
+    time: new Date().toISOString()
+  });
+});
+
+// Friendly hints for common mistaken GET requests to POST-only endpoints
+app.get('/api/auth/signup', (_req, res) => {
+  res.status(405).json({ error: 'Method Not Allowed. Use POST /api/auth/signup' });
+});
+app.get('/api/auth/login', (_req, res) => {
+  res.status(405).json({ error: 'Method Not Allowed. Use POST /api/auth/login' });
+});
+
 // --- Auth helpers ---
 function signToken(user) {
   return jwt.sign({ sub: String(user._id), email: user.email, role: user.role }, JWT_SECRET, { expiresIn: '7d' });
@@ -206,8 +235,8 @@ app.post('/api/auth/signup', async (req, res) => {
     const fullNameNorm = String(fullName).trim();
 
     // Explicit rule checks (mirror schema so clients get fast feedback)
-    if (!/^[0-9]+$/.test(studentIdNorm)) {
-      return res.status(400).json({ error: 'Student ID must contain numbers only' });
+    if (!/^\d{2}-\d{4}-\d{6}$/.test(studentIdNorm)) {
+      return res.status(400).json({ error: 'Student ID must match 00-0000-000000' });
     }
     if (!validator.isEmail(emailNorm)) {
       return res.status(400).json({ error: 'Email must contain @ and be valid' });
@@ -223,7 +252,7 @@ app.post('/api/auth/signup', async (req, res) => {
     }
 
     const passwordHash = await bcrypt.hash(String(password), 10);
-    const user = await User.create({ studentId: studentIdNorm, email: emailNorm, fullName: fullNameNorm, passwordHash });
+    const user = await User.create({ studentId: studentIdNorm, email: emailNorm, name: fullNameNorm, fullName: fullNameNorm, passwordHash });
     const token = signToken(user);
     return res.status(201).json({
       token,

@@ -2,9 +2,9 @@ const path = require('node:path');
 require('dotenv').config({ path: path.resolve(process.cwd(), '.env') });
 
 const { MongoClient, ServerApiVersion } = require('mongodb');
-const uri = process.env.MONGO_URI || process.env.MONGODB_URI;
+const { resolveMongoConfig } = require('../db/uri');
+const { uri, dbName } = resolveMongoConfig();
 if (!uri) { console.error('Missing MONGO_URI (or MONGODB_URI) in .env'); process.exit(1); }
-const dbName = process.env.DB_NAME || 'libreport';
 
 const client = new MongoClient(uri, {
   serverApi: { version: ServerApiVersion.v1, strict: true, deprecationErrors: true },
