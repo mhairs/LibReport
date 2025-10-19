@@ -1,7 +1,13 @@
-require('dotenv').config();
+const path = require('node:path');
+require('dotenv').config({ path: path.resolve(process.cwd(), '.env') });
 const { MongoClient, ServerApiVersion } = require('mongodb');
 
-const uri = process.env.MONGODB_URI;
+const uri = process.env.MONGO_URI || process.env.MONGODB_URI;
+if (!uri) {
+  console.error('Missing MONGO_URI (or MONGODB_URI) in .env');
+  process.exit(1);
+}
+
 const client = new MongoClient(uri, {
   serverApi: { version: ServerApiVersion.v1, strict: true, deprecationErrors: true }
 });
@@ -10,9 +16,9 @@ const client = new MongoClient(uri, {
   try {
     await client.connect();
     await client.db('admin').command({ ping: 1 });
-    console.log('✅ Connected to MongoDB Atlas');
+    console.log('Connected to MongoDB successfully');
   } catch (e) {
-    console.error('❌ Connection failed:', e.message);
+    console.error('Connection failed:', e.message);
   } finally {
     await client.close();
   }

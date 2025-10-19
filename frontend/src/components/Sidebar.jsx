@@ -1,10 +1,21 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { NavLink } from "react-router-dom";
 import "../styles/Sidebar.css";
 import logo from "../assets/fav_logo.png";
 
 const Sidebar = () => {
   const [isAdminOpen, setIsAdminOpen] = useState(false);
+  const [role, setRole] = useState('student');
+
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem('lr_user');
+      if (raw) {
+        const u = JSON.parse(raw);
+        if (u?.role) setRole(u.role);
+      }
+    } catch {}
+  }, []);
 
   return (
     <aside className="sidebar">
@@ -42,6 +53,7 @@ const Sidebar = () => {
           Reports
         </NavLink>
 
+        {role === 'admin' && (
         <div className="dropdown-section">
           <div
             className="dropdown-toggle"
@@ -76,6 +88,7 @@ const Sidebar = () => {
             </div>
           )}
         </div>
+        )}
       </nav>
     </aside>
   );

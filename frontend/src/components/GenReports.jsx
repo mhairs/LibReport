@@ -1,9 +1,15 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import "../styles/GenReports.css";
+import api from "../api";
 
 const GenReport = ({ onClose }) => {
   const currentDate = new Date().toLocaleDateString();
   const currentTime = new Date().toLocaleTimeString();
+  const [counts, setCounts] = useState({ users: 0, books: 0, activeLoans: 0, visitsToday: 0 });
+
+  useEffect(() => {
+    api.get('/dashboard').then(r => setCounts(r.data.counts)).catch(()=>{});
+  }, []);
 
   return (
     <div className="modal-overlay">
@@ -19,18 +25,10 @@ const GenReport = ({ onClose }) => {
 
         <div className="report-summary">
           <h3>SUMMARY</h3>
-          <p>
-            Active Users: <span>15</span>
-          </p>
-          <p>
-            Total Books Borrowed: <span>5</span>
-          </p>
-          <p>
-            Total Books Returned: <span>0</span>
-          </p>
-          <p>
-            Total Overdue Books: <span>4</span>
-          </p>
+          <p>Active Users: <span>{counts.users}</span></p>
+          <p>Total Books Borrowed: <span>{counts.activeLoans}</span></p>
+          <p>Total Books: <span>{counts.books}</span></p>
+          <p>Visits Today: <span>{counts.visitsToday}</span></p>
         </div>
 
         <div className="report-footer">
