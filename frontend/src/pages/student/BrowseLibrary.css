@@ -1,0 +1,122 @@
+/* General container styling */
+.library-container {
+  padding: 20px;
+  background-color: #fff;
+  min-height: 100vh;
+  background-image: url("../../assets/StudentBG.png");
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+
+/* Header section styling */
+.header-section {
+  background-color: #4B6734;
+  color: white;
+  padding: 10px 20px;
+  margin-bottom: 20px;
+  border-radius: 5px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+/* Back link styling */
+.back-link {
+  color: white;
+  text-decoration: none;
+  font-size: 1.2em;
+  padding: 5px 10px; 
+  border-radius: 4px; 
+  transition: background-color 0.3s; 
+}
+
+.back-link:hover {
+  background-color: rgba(255, 255, 255, 0.2); 
+}
+
+/* Header title styling */
+.header-title {
+  font-size: 1.25rem;
+  margin: 0;
+}
+
+/* Search section styling */
+.search-section {
+  display: flex;
+}
+
+/* Search input styling */
+.search-input {
+  padding: 0.5rem;
+  border-radius: 0.25rem 0 0 0.25rem;
+  margin-right: 0.5rem;
+}
+
+/* Sort button styling */
+.sort-button {
+  background-color: #e5e7eb;
+  padding: 0.5rem;
+  border-radius: 0 0.25rem 0.25rem 0;
+}
+
+/* Grid section styling */
+.grid-section {
+  display: grid;
+  grid-template-columns: repeat(1, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+/* Media queries for responsive grid */
+@media (min-width: 640px) {
+  .grid-section {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 768px) {
+  .grid-section {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 1024px) {
+  .grid-section {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+/* Library card styling */
+.library-card {
+  background-color: white;
+  padding: 1rem;
+  border-radius: 0.25rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1), 0 1px 2px rgba(0, 0, 0, 0.06);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+/* Card cover styling */
+.card-cover {
+  width: 6rem;
+  height: 8rem;
+  background-color: #e5e7eb;
+  margin-bottom: 0.5rem;
+}
+
+/* Card details styling */
+.card-details {
+  text-align: center;
+}
+
+/* Card title styling */
+.card-title {
+  font-weight: bold;
+}
+
+/* Card author and genre styling */
+.card-author,
+.card-genre {
+  background-color: #e5e7eb;
+}

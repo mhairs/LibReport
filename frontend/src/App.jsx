@@ -1,15 +1,15 @@
 import React from "react";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
-import SignIn from "./pages/SignIn";
-import SignUp from "./pages/SignUp";
+import SignIn from "./pages/admin/SignIn";
+import SignUp from "./pages/admin/SignUp";
 import "./styles/Auth.css";
-import Dashboard from "./pages/Dashboard";
-import UsageHeatmaps from "./pages/UsageHeatmaps";
-import Tracker from "./pages/Tracker";
-import Reports from "./pages/Reports";
-import UserManagement from "./pages/UserManagement";
-import MaterialManagement from "./pages/MaterialManagement";
-import BooksManagement from "./pages/BooksManagement";
+import Dashboard from "./pages/admin/Dashboard";
+import UsageHeatmaps from "./pages/admin/UsageHeatmaps";
+import Tracker from "./pages/admin/Tracker";
+import Reports from "./pages/admin/Reports";
+import UserManagement from "./pages/admin/UserManagement";
+import MaterialManagement from "./pages/admin/MaterialManagement";
+import BooksManagement from "./pages/admin/BooksManagement";
 
 function App() {
   return (

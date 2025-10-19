@@ -1,0 +1,40 @@
+.student-card {
+  width: 300px;              /* fixed square size */
+  height: 300px;
+  background: linear-gradient(180deg, #3b7a32, #2e6d2b);
+  color: white;
+  border-radius: 10px;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  margin: 20px;
+  transition: transform 0.2s, box-shadow 0.2s, background 0.2s; /* transition  */
+}
+
+.student-card:hover {
+  background: linear-gradient(180deg, #4B6734, #4B6734); /* magiging dark na  */
+  transform: translateY(-5px);
+  box-shadow: 0 8px 12px rgba(0,0,0,0.3);
+}
+
+.student-card:active {
+  background: linear-gradient(180deg, #D4AF37, #D4AF37); /* magiging goldz */
+  transform: translateY(0); 
+  box-shadow: 0 4px 8px rgba(0,0,0,0.2); 
+}
+
+.student-card-icon {
+  width: 500px;               /* large icon */
+  height: 130px;
+  object-fit: contain;
+  margin-bottom: 15px;
+}
+
+.student-card-title {
+  font-size: 20px;
+  font-weight: bold;
+  line-height: 1.3;
+}

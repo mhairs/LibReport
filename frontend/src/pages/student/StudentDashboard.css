@@ -1,0 +1,105 @@
+.student-dashboard-container {
+  padding: 20px;
+  background-color: #f5f7ff;
+  min-height: 100vh;
+}
+
+.student-dashboard-header {
+  margin-bottom: 30px;
+}
+
+.student-dashboard-header h1 {
+  font-size: 2rem;
+  color: #2e8b55;
+}
+
+.student-dashboard-header p {
+  font-size: 1rem;
+  color: #7abada;
+}
+
+.student-cards-row {
+  display: flex;
+  justify-content: center; 
+  align-items: center;     
+  gap: 20px;               
+  flex-wrap: wrap;         
+  margin-top: 30px;
+}
+
+/* Header Styles */
+.student-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: #4B6734;
+  color: white;
+  padding: 15px 40px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+}
+
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.header-logo {
+  width: 60px;
+  height: 40px;
+}
+
+.header-title {
+  font-size: 1.5rem;
+  font-weight: bold;
+}
+
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.student-name {
+  font-weight: 500;
+}
+
+.logout-btn {
+  background: #d9534f;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  padding: 8px 16px;
+  cursor: pointer;
+  transition: background 0.3s;
+}
+
+.logout-btn:hover {
+  background: #c9302c;
+}
+
+.student-dashboard {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 15px; /* space between cards */
+  flex-wrap: wrap; /* para responsive kahit lumiit screen */
+  min-height: 100vh;
+  background-image: url("../../assets/StudentBG.png"); 
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+
+
+/* Books Borrowed css */
+.no-link-style {
+  text-decoration: none;
+  color: inherit;
+}
+
+/* Browse Library css */
+.no-link-style {
+  text-decoration: none;
+  color: inherit;
+}

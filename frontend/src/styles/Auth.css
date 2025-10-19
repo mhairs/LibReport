@@ -90,6 +90,46 @@ body {
   gap: 1.2rem;
 }
 
+.auth-form label {
+  display: block;
+  font-weight: bold;
+  color: #000;
+  margin-bottom: 5px;
+}
+
+.role-selection {
+  text-align: center;
+  margin: 10px 0 20px 0;
+}
+
+.role-buttons {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 5px;
+}
+
+.role-btn {
+  border: 2px solid #ccc;
+  background-color: white;
+  color: #333;
+  border-radius: 25px;
+  padding: 6px 20px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease-in-out;
+}
+
+.role-btn.active {
+  border-color: #333;
+  background-color: #333;
+  color: white;
+}
+
+.role-btn:hover {
+  border-color: #333;
+}
+ 
 .form-group label {
   display: block;
   font-weight: bold;

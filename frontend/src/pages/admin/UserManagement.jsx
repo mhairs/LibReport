@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import Sidebar from "../components/Sidebar";
+import Sidebar from "../../components/Sidebar";
 import "../styles/UserManagement.css";
 import pfp from "../assets/pfp.png";
 import { useNavigate } from "react-router-dom"; 
