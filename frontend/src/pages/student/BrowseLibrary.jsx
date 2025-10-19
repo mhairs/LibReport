@@ -1,6 +1,6 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom'; // For navigation
-import "./BrowseLibrary.css";
+import "../student/BrowseLibrary.css";
 
 const BrowseLibrary = () => {
   const libraryItems = [

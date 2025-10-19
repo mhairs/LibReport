@@ -1,23 +1,16 @@
-<<<<<<< HEAD:frontend/src/pages/admin/BooksManagement.jsx
-import React, { useState } from "react";
-import Sidebar from "../../components/Sidebar";
-=======
 import React, { useEffect, useState } from "react";
-import Sidebar from "../components/Sidebar";
->>>>>>> e9595b6ac88f7a77fe4bfd0ad26048319c9e3035:frontend/src/pages/BooksManagement.jsx
-import "../styles/BooksManagement.css";
-import pfp from "../assets/pfp.png";
+import Sidebar from "../../components/Sidebar"; 
+import "../../styles/BooksManagement.css"; 
+import pfp from "../../assets/pfp.png"; 
 import { useNavigate } from "react-router-dom";
-import api from "../api";
+import api from "../../api";
 
 const BooksManagement = () => {
   const [openDropdown, setOpenDropdown] = useState(null);
   const [books, setBooks] = useState([]);
-
   const [activeModal, setActiveModal] = useState(null);
   const [selectedBook, setSelectedBook] = useState(null);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
-
   const [showLogoutModal, setShowLogoutModal] = useState(false);
   const navigate = useNavigate();
 
@@ -33,14 +26,26 @@ const BooksManagement = () => {
 
   const loadActiveLoans = async () => {
     try {
-      const { data } = await api.get('/loans/active');
+      const { data } = await api.get("/loans/active");
       const items = (data.items || []).map((it) => ({
         id: it._id,
         title: it.title,
         student: it.student,
-        borrowed: it.borrowedAt ? new Date(it.borrowedAt).toLocaleDateString(undefined, { year:'numeric', month:'long', day:'numeric' }) : '-',
-        due: it.dueAt ? new Date(it.dueAt).toLocaleDateString(undefined, { year:'numeric', month:'long', day:'numeric' }) : '-',
-        status: it.status || 'On Time',
+        borrowed: it.borrowedAt
+          ? new Date(it.borrowedAt).toLocaleDateString(undefined, {
+              year: "numeric",
+              month: "long",
+              day: "numeric",
+            })
+          : "-",
+        due: it.dueAt
+          ? new Date(it.dueAt).toLocaleDateString(undefined, {
+              year: "numeric",
+              month: "long",
+              day: "numeric",
+            })
+          : "-",
+        status: it.status || "On Time",
       }));
       setBooks(items);
     } catch (e) {
@@ -48,7 +53,9 @@ const BooksManagement = () => {
     }
   };
 
-  useEffect(() => { loadActiveLoans(); }, []);
+  useEffect(() => {
+    loadActiveLoans();
+  }, []);
 
   const handleAction = (action, book) => {
     setSelectedBook(book);
@@ -76,9 +83,11 @@ const BooksManagement = () => {
 
   const confirmReturn = async () => {
     try {
-      await api.post('/loans/return', { loanId: selectedBook.id });
+      await api.post("/loans/return", { loanId: selectedBook.id });
       await loadActiveLoans();
-    } catch (e) { /* ignore for now */ }
+    } catch (e) {
+      /* ignore for now */
+    }
     closeModal();
   };
 
@@ -185,7 +194,9 @@ const BooksManagement = () => {
                         <td>{book.due}</td>
                         <td>
                           <span
-                            className={`status-badge ${getStatusClass(book.status)}`}
+                            className={`status-badge ${getStatusClass(
+                              book.status
+                            )}`}
                           >
                             {book.status}
                           </span>
@@ -220,7 +231,9 @@ const BooksManagement = () => {
           <div className="modal-box pretty-modal">
             {activeModal === "return" && (
               <>
-                <h3 className="modal-title-green">Mark this book as returned?</h3>
+                <h3 className="modal-title-green">
+                  Mark this book as returned?
+                </h3>
                 <div className="modal-field">
                   <label>Book Title</label>
                   <input type="text" value={selectedBook.title} readOnly />
@@ -302,7 +315,9 @@ const BooksManagement = () => {
       {showLogoutModal && (
         <div className="modal-overlay">
           <div className="modal-box pretty-modal">
-            <h3 className="modal-title-green">Are you sure you want to logout?</h3>
+            <h3 className="modal-title-green">
+              Are you sure you want to logout?
+            </h3>
             <div className="modal-actions center-actions">
               <button
                 className="cancel-btn"
@@ -310,10 +325,7 @@ const BooksManagement = () => {
               >
                 Close
               </button>
-              <button
-                className="confirm-btn delete-btn"
-                onClick={handleLogout}
-              >
+              <button className="confirm-btn delete-btn" onClick={handleLogout}>
                 Confirm
               </button>
             </div>

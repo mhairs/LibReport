@@ -1,10 +1,10 @@
 import React, { useEffect, useMemo, useState } from "react";
-import "../styles/Dashboard.css";
+import "../../styles/Dashboard.css";
 import Sidebar from "../../components/Sidebar";
 import ReportModal from "../../components/GenReports";
-import profileImage from "../assets/pfp.png";
+import profileImage from "../../assets/pfp.png";
 import { useNavigate } from "react-router-dom";
-import api from "../api";
+import api from "../../api";
 import {
   LineChart,
   Line,

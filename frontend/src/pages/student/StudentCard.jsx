@@ -1,5 +1,5 @@
 import React from "react";
-import "./StudentCard.css";
+import "../student/StudentCard";
 
 const StudentCard = ({ icon, title }) => {
   return (

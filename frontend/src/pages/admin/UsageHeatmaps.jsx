@@ -1,10 +1,6 @@
-<<<<<<< HEAD:frontend/src/pages/admin/UsageHeatmaps.jsx
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
+import { useNavigate } from "react-router-dom";
 import Sidebar from "../../components/Sidebar";
-=======
-import React, { useEffect, useMemo, useState } from "react";
-import Sidebar from "../components/Sidebar";
->>>>>>> e9595b6ac88f7a77fe4bfd0ad26048319c9e3035:frontend/src/pages/UsageHeatmaps.jsx
 import {
   LineChart,
   Line,
@@ -14,67 +10,70 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from "recharts";
-import "../styles/UsageHeatmaps.css";
-import profileImage from "../assets/pfp.png";
-import { useNavigate } from "react-router-dom";
-import api from "../api";
+import "../../styles/UsageHeatmaps.css";
+import profileImage from "../../assets/pfp.png";
+import api from "../../api";
 
 const UsageHeatmaps = () => {
   const [timeRange, setTimeRange] = useState("");
   const [metric, setMetric] = useState("");
   const [showDropdown, setShowDropdown] = useState(false);
   const [chartRange, setChartRange] = useState("Daily");
-  const [showLogoutModal, setShowLogoutModal] = useState(false); 
-  const navigate = useNavigate(); 
+  const [showLogoutModal, setShowLogoutModal] = useState(false);
+  const [items, setItems] = useState([]);
+  const navigate = useNavigate();
 
- 
+  // 🔹 Logout Handler
   const handleLogout = () => {
+    localStorage.removeItem("lr_token");
+    localStorage.removeItem("lr_user");
     setShowLogoutModal(false);
-    setShowDropdown(false); try { localStorage.removeItem('lr_token'); try { localStorage.removeItem('lr_user'); } catch {} } catch {}
-    navigate("/signin", { replace: true }); 
+    setShowDropdown(false);
+    navigate("/signin", { replace: true });
   };
 
-  const [items, setItems] = useState([]);
+  // 🔹 Fetch Heatmap Data
   useEffect(() => {
     setTimeRange("");
     setChartRange("Daily");
-    api.get('/heatmap/visits', { params: { days: 30 } })
-      .then(r => setItems(r.data.items || []))
+
+    api
+      .get("/heatmap/visits", { params: { days: 30 } })
+      .then((res) => setItems(res.data?.items || []))
       .catch(() => setItems([]));
   }, []);
 
+  // 🔹 Prepare Chart Data
   const dataSets = useMemo(() => {
-    // Build simple Daily/Weekly/Monthly aggregations from items
-    const daily = new Array(7).fill(0); // dow 1..7
-    const weekly = [0,0,0,0];
-    const monthly = [0,0,0,0];
+    const daily = new Array(7).fill(0);
     const now = new Date();
+
     for (const it of items) {
-      const d = it.dow || 1;
-      daily[d-1] += it.count || 0;
-      // rough split into 4 weeks from last 28 days
-      const daysAgo = Math.max(0, Math.floor((now - new Date(now.getFullYear(), now.getMonth(), now.getDate()))/86400000));
-      // can't recover date from aggregation; just mirror daily into weekly/monthly to keep UI populated
+      const d = it.dow || 1; // Day of week
+      daily[d - 1] += it.count || 0;
     }
-    const dayNames = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
-    const dailySeries = dayNames.map((n,i) => ({ day: n, value: daily[i] }));
+
+    const dayNames = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+    const dailySeries = dayNames.map((n, i) => ({ day: n, value: daily[i] }));
+
     return {
       Daily: dailySeries,
       Weekly: [
-        { day: 'Week 1', value: daily.slice(0,2).reduce((a,b)=>a+b,0) },
-        { day: 'Week 2', value: daily.slice(2,4).reduce((a,b)=>a+b,0) },
-        { day: 'Week 3', value: daily.slice(4,6).reduce((a,b)=>a+b,0) },
-        { day: 'Week 4', value: daily.slice(6).reduce((a,b)=>a+b,0) },
+        { day: "Week 1", value: daily.slice(0, 2).reduce((a, b) => a + b, 0) },
+        { day: "Week 2", value: daily.slice(2, 4).reduce((a, b) => a + b, 0) },
+        { day: "Week 3", value: daily.slice(4, 6).reduce((a, b) => a + b, 0) },
+        { day: "Week 4", value: daily.slice(6).reduce((a, b) => a + b, 0) },
       ],
       Monthly: [
-        { day: 'This Month', value: daily.reduce((a,b)=>a+b,0) }
-      ]
+        { day: "This Month", value: daily.reduce((a, b) => a + b, 0) },
+      ],
     };
   }, [items]);
 
   const ranges = ["Daily", "Weekly", "Monthly"];
   const metrics = ["Books Borrowed", "Overdue Books"];
 
+  // 🔹 Handle Time Range Selection
   const handleTimeRangeChange = (e) => {
     const value = e.target.value;
     setTimeRange(value);
@@ -86,6 +85,7 @@ const UsageHeatmaps = () => {
       <Sidebar />
 
       <div className="heatmap-main">
+        {/* 🔹 Top Bar */}
         <div className="heatmap-topbar">
           <div
             className="profile-container"
@@ -103,12 +103,14 @@ const UsageHeatmaps = () => {
           </div>
         </div>
 
+        {/* 🔹 Main Content */}
         <div className="heatmap-card">
           <h2>Usage Heatmaps</h2>
           <hr className="heatmap-divider" />
 
           <div className="heatmap-body-card">
             <div className="heatmap-body">
+              {/* 🔹 Controls */}
               <div className="heatmap-controls">
                 <div>
                   <select value={timeRange} onChange={handleTimeRangeChange}>
@@ -140,6 +142,7 @@ const UsageHeatmaps = () => {
                 </div>
               </div>
 
+              {/* 🔹 Chart */}
               <div className="chart-card">
                 <ResponsiveContainer width="100%" height={300}>
                   <LineChart data={dataSets[chartRange] || []}>
@@ -162,6 +165,7 @@ const UsageHeatmaps = () => {
         </div>
       </div>
 
+      {/* 🔹 Logout Confirmation Modal */}
       {showLogoutModal && (
         <div className="modal-overlay">
           <div className="modal-box pretty-modal">
@@ -176,10 +180,7 @@ const UsageHeatmaps = () => {
               >
                 Close
               </button>
-              <button
-                className="confirm-btn delete-btn"
-                onClick={handleLogout}
-              >
+              <button className="confirm-btn delete-btn" onClick={handleLogout}>
                 Confirm
               </button>
             </div>
@@ -191,5 +192,3 @@ const UsageHeatmaps = () => {
 };
 
 export default UsageHeatmaps;
-
-

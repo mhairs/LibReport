@@ -1,10 +1,10 @@
 import React, { useEffect, useState } from "react";
-import StudentCard from "./StudentCard";
-import bookIcon from "../../assets/student-icons/books2.png";
-import browseIcon from "../../assets/student-icons/library.png";
-import clockIcon from "../../assets/student-icons/clock.png";
-import overdueIcon from "../../assets/student-icons/ex.png";
-import "./StudentDashboard.css";
+import StudentCard from "../student/StudentCard";
+import bookIcon from "../../assets/books2.png";
+import browseIcon from "../../assets/library.png";
+import clockIcon from "../../assets/clock.png";
+import overdueIcon from "../../assets/ex.png";
+import "../student/StudentDashboard";
 import logo from "../../assets/fav_logo.png";
 import { Link, useNavigate } from "react-router-dom"; 
 

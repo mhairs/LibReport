@@ -1,43 +1,57 @@
-<<<<<<< HEAD:frontend/src/pages/admin/Tracker.jsx
-import React, { useState } from "react";
-import Sidebar from "../../components/Sidebar";
-=======
 import React, { useEffect, useState } from "react";
-import Sidebar from "../components/Sidebar";
->>>>>>> e9595b6ac88f7a77fe4bfd0ad26048319c9e3035:frontend/src/pages/Tracker.jsx
-import "../styles/Tracker.css";
-import profileImage from "../assets/pfp.png";
 import { useNavigate } from "react-router-dom";
-import api from "../api";
+import Sidebar from "../../components/Sidebar";
+import "../../styles/Tracker.css";
+import profileImage from "../../assets/pfp.png";
+import api from "../../api";
 
 const Tracker = () => {
   const [showDropdown, setShowDropdown] = useState(false);
   const [showLogoutModal, setShowLogoutModal] = useState(false);
+  const [logs, setLogs] = useState([]);
+  const [stats, setStats] = useState({
+    outbound: 0,
+    inbound: 0,
+    overdue: 0,
+    active: 0,
+  });
   const navigate = useNavigate();
 
+  // 🔹 Handle Logout
   const handleLogout = () => {
+    localStorage.removeItem("lr_token");
+    localStorage.removeItem("lr_user");
     setShowLogoutModal(false);
-    setShowDropdown(false); try { localStorage.removeItem('lr_token'); try { localStorage.removeItem('lr_user'); } catch {} } catch {}
-    navigate("/signin", { replace: true }); 
+    setShowDropdown(false);
+    navigate("/signin", { replace: true });
   };
 
-  const [logs, setLogs] = useState([]);
-  const [stats, setStats] = useState({ outbound: 0, inbound: 0, overdue: 0, active: 0 });
-
+  // 🔹 Fetch Data
   useEffect(() => {
-    api.get('/reports/overdue').then(r => {
-      const items = r.data?.items || [];
-      const mapped = items.map(o => ({
-        status: 'Overdue',
-        borrowedDate: o.borrowedAt ? new Date(o.borrowedAt).toLocaleString() : '-',
-        dueDate: o.dueAt ? new Date(o.dueAt).toLocaleString() : '-',
-        material: o.title,
-        user: o.user,
-        color: 'red'
-      }));
-      setLogs(mapped);
-      setStats({ outbound: 0, inbound: 0, overdue: mapped.length, active: mapped.length });
-    }).catch(() => { setLogs([]); });
+    api
+      .get("/reports/overdue")
+      .then((res) => {
+        const items = res.data?.items || [];
+        const mapped = items.map((o) => ({
+          status: "Overdue",
+          borrowedDate: o.borrowedAt
+            ? new Date(o.borrowedAt).toLocaleString()
+            : "-",
+          dueDate: o.dueAt ? new Date(o.dueAt).toLocaleString() : "-",
+          material: o.title,
+          user: o.user,
+          color: "red",
+        }));
+
+        setLogs(mapped);
+        setStats({
+          outbound: 0,
+          inbound: 0,
+          overdue: mapped.length,
+          active: mapped.length,
+        });
+      })
+      .catch(() => setLogs([]));
   }, []);
 
   return (
@@ -45,6 +59,7 @@ const Tracker = () => {
       <Sidebar />
 
       <main className="tracker-main">
+        {/* 🔹 Top Bar */}
         <div className="reports-topbar">
           <div
             className="profile-container"
@@ -62,7 +77,7 @@ const Tracker = () => {
           </div>
         </div>
 
-        {/* Main Content */}
+        {/* 🔹 Tracker Section */}
         <section className="tracker-card">
           <h2>Tracker</h2>
 
@@ -98,33 +113,43 @@ const Tracker = () => {
                 </tr>
               </thead>
               <tbody>
-                {logs.map((log, index) => (
-                  <tr key={index}>
-                    <td>
-                      <span
-                        className="status-badge"
-                        style={{ backgroundColor: log.color }}
-                      >
-                        {log.status}
-                      </span>
+                {logs.length > 0 ? (
+                  logs.map((log, index) => (
+                    <tr key={index}>
+                      <td>
+                        <span
+                          className="status-badge"
+                          style={{ backgroundColor: log.color }}
+                        >
+                          {log.status}
+                        </span>
+                      </td>
+                      <td>{log.borrowedDate}</td>
+                      <td>{log.dueDate}</td>
+                      <td>{log.material}</td>
+                      <td>{log.user}</td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr>
+                    <td colSpan="5" style={{ textAlign: "center" }}>
+                      No logs available.
                     </td>
-                    <td>{log.borrowedDate}</td>
-                    <td>{log.dueDate}</td>
-                    <td>{log.material}</td>
-                    <td>{log.user}</td>
                   </tr>
-                ))}
+                )}
               </tbody>
             </table>
           </div>
         </section>
       </main>
 
-      
+      {/* 🔹 Logout Confirmation Modal */}
       {showLogoutModal && (
         <div className="modal-overlay">
           <div className="modal-box pretty-modal">
-            <h3 className="modal-title-green">Are you sure you want to logout?</h3>
+            <h3 className="modal-title-green">
+              Are you sure you want to logout?
+            </h3>
 
             <div className="modal-actions center-actions">
               <button
@@ -133,10 +158,7 @@ const Tracker = () => {
               >
                 Close
               </button>
-              <button
-                className="confirm-btn delete-btn"
-                onClick={handleLogout}
-              >
+              <button className="confirm-btn delete-btn" onClick={handleLogout}>
                 Confirm
               </button>
             </div>
@@ -148,5 +170,3 @@ const Tracker = () => {
 };
 
 export default Tracker;
-
-

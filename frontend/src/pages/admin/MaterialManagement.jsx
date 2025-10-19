@@ -1,14 +1,9 @@
-<<<<<<< HEAD:frontend/src/pages/admin/MaterialManagement.jsx
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Sidebar from "../../components/Sidebar";
-=======
-import React, { useEffect, useState } from "react";
-import Sidebar from "../components/Sidebar";
->>>>>>> e9595b6ac88f7a77fe4bfd0ad26048319c9e3035:frontend/src/pages/MaterialManagement.jsx
-import "../styles/MaterialManagement.css";
-import pfp from "../assets/pfp.png";
+import "../../styles/MaterialManagement.css";
+import pfp from "../../assets/pfp.png";
 import { useNavigate } from "react-router-dom";
-import api from "../api";
+import api from "../../api";
 
 const MaterialManagement = () => {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
@@ -16,12 +11,8 @@ const MaterialManagement = () => {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [selectedMaterial, setSelectedMaterial] = useState(null);
-
   const [showLogoutModal, setShowLogoutModal] = useState(false);
-  const navigate = useNavigate();
-
   const [materials, setMaterials] = useState([]);
-
   const [formData, setFormData] = useState({
     type: "",
     title: "",
@@ -29,28 +20,34 @@ const MaterialManagement = () => {
     stock: "",
   });
 
-  const handleChange = (e) => {
-    setFormData({ ...formData, [e.target.placeholder.toLowerCase()]: e.target.value });
-  };
+  const navigate = useNavigate();
 
+  // ✅ Load materials (books) from backend
   const loadBooks = async () => {
     try {
-      const { data } = await api.get('/books');
-      const items = (data || []).map(b => ({
+      const { data } = await api.get("/books");
+      const items = (data || []).map((b) => ({
         id: b._id || b.id,
-        type: (b.tags && b.tags[0]) || 'Book',
+        type: (b.tags && b.tags[0]) || "Book",
         title: b.title,
         author: b.author,
         stock: b.availableCopies ?? b.totalCopies ?? 0,
       }));
       setMaterials(items);
-    } catch { setMaterials([]); }
+    } catch (error) {
+      console.error("Error loading books:", error);
+      setMaterials([]);
+    }
   };
 
-  useEffect(() => { loadBooks(); }, []);
+  useEffect(() => {
+    loadBooks();
+  }, []);
 
+  // ✅ Add new book
   const handleAddBook = async () => {
     if (!formData.title || !formData.author) return;
+
     try {
       const body = {
         title: formData.title,
@@ -58,40 +55,59 @@ const MaterialManagement = () => {
         tags: formData.type ? [formData.type] : [],
         totalCopies: Number(formData.stock || 1),
       };
-      await api.post('/books', body);
+      await api.post("/books", body);
       setFormData({ type: "", title: "", author: "", stock: "" });
       setIsAddModalOpen(false);
       await loadBooks();
-    } catch (e) {}
+    } catch (error) {
+      console.error("Error adding book:", error);
+    }
   };
 
+  // ✅ Edit existing book
   const handleEditBook = async () => {
     if (!selectedMaterial) return;
+
     try {
       const body = {
         title: formData.title || selectedMaterial.title,
         author: formData.author || selectedMaterial.author,
-        tags: formData.type ? [formData.type] : undefined,
-        totalCopies: formData.stock ? Number(formData.stock) : undefined,
+        tags: formData.type ? [formData.type] : selectedMaterial.tags,
+        totalCopies: formData.stock
+          ? Number(formData.stock)
+          : selectedMaterial.stock,
       };
       await api.patch(`/books/${selectedMaterial.id}`, body);
       setIsEditModalOpen(false);
       setFormData({ type: "", title: "", author: "", stock: "" });
       await loadBooks();
-    } catch (e) {}
+    } catch (error) {
+      console.error("Error editing book:", error);
+    }
   };
 
+  // ✅ Delete book
   const handleRemoveBook = async () => {
     if (!selectedMaterial) return;
-    try { await api.delete(`/books/${selectedMaterial.id}`); } catch (e) {}
-    setIsDeleteModalOpen(false);
-    setSelectedMaterial(null);
-    await loadBooks();
+
+    try {
+      await api.delete(`/books/${selectedMaterial.id}`);
+      setIsDeleteModalOpen(false);
+      setSelectedMaterial(null);
+      await loadBooks();
+    } catch (error) {
+      console.error("Error deleting book:", error);
+    }
   };
 
+  // ✅ Logout
   const handleLogout = () => {
+    try {
+      localStorage.removeItem("lr_token");
+      localStorage.removeItem("lr_user");
+    } catch {}
     setShowLogoutModal(false);
-    setIsDropdownOpen(false); try { localStorage.removeItem('lr_token'); try { localStorage.removeItem('lr_user'); } catch {} } catch {}
+    setIsDropdownOpen(false);
     navigate("/signin", { replace: true });
   };
 
@@ -100,6 +116,7 @@ const MaterialManagement = () => {
       <Sidebar />
 
       <div className="material-page-main">
+        {/* ===== TOPBAR ===== */}
         <div className="material-topbar">
           <div
             className="profile-container"
@@ -116,20 +133,24 @@ const MaterialManagement = () => {
             )}
           </div>
         </div>
+
+        {/* ===== MAIN CARD ===== */}
         <div className="material-card">
           <h2>Material Management</h2>
           <hr className="material-divider" />
+
           <div className="material-body-card">
             <div className="material-info-card">
+              {/* ===== ACTION BUTTONS ===== */}
               <div className="button-row">
                 <button className="add-btn" onClick={() => setIsAddModalOpen(true)}>
                   Add Book
                 </button>
                 <button
                   className="edit-btn"
+                  disabled={!materials.length}
                   onClick={() => {
-                    const firstItem = materials[0];
-                    setSelectedMaterial(firstItem);
+                    setSelectedMaterial(materials[0]);
                     setIsEditModalOpen(true);
                   }}
                 >
@@ -137,9 +158,9 @@ const MaterialManagement = () => {
                 </button>
                 <button
                   className="delete-btn"
+                  disabled={!materials.length}
                   onClick={() => {
-                    const firstItem = materials[0];
-                    setSelectedMaterial(firstItem);
+                    setSelectedMaterial(materials[0]);
                     setIsDeleteModalOpen(true);
                   }}
                 >
@@ -147,15 +168,15 @@ const MaterialManagement = () => {
                 </button>
               </div>
 
-              {/* ✅ Table */}
+              {/* ===== MATERIALS TABLE ===== */}
               <div className="user-table-wrapper">
                 <table className="user-table">
                   <thead>
                     <tr>
-                      <th>MATERIAL TYPE</th>
-                      <th>TITLE</th>
-                      <th>AUTHOR</th>
-                      <th>STOCK</th>
+                      <th>Material Type</th>
+                      <th>Title</th>
+                      <th>Author</th>
+                      <th>Stock</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -173,39 +194,27 @@ const MaterialManagement = () => {
             </div>
           </div>
 
-          {/*Add Modal */}
+          {/* ===== ADD MODAL ===== */}
           {isAddModalOpen && (
             <div className="modal-overlay">
               <div className="modal-box">
                 <h3>Add Book</h3>
-                <label>Material Type</label>
-                <input
-                  type="text"
-                  placeholder="Type"
-                  value={formData.type}
-                  onChange={(e) => setFormData({ ...formData, type: e.target.value })}
-                />
-                <label>Title</label>
-                <input
-                  type="text"
-                  placeholder="Title"
-                  value={formData.title}
-                  onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                />
-                <label>Author</label>
-                <input
-                  type="text"
-                  placeholder="Author"
-                  value={formData.author}
-                  onChange={(e) => setFormData({ ...formData, author: e.target.value })}
-                />
-                <label>Stock</label>
-                <input
-                  type="number"
-                  placeholder="Stock"
-                  value={formData.stock}
-                  onChange={(e) => setFormData({ ...formData, stock: e.target.value })}
-                />
+                {["Type", "Title", "Author", "Stock"].map((field) => (
+                  <React.Fragment key={field}>
+                    <label>{field}</label>
+                    <input
+                      type={field === "Stock" ? "number" : "text"}
+                      placeholder={field}
+                      value={formData[field.toLowerCase()] || ""}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          [field.toLowerCase()]: e.target.value,
+                        })
+                      }
+                    />
+                  </React.Fragment>
+                ))}
                 <div className="modal-actions">
                   <button onClick={() => setIsAddModalOpen(false)}>Cancel</button>
                   <button className="save-btn" onClick={handleAddBook}>
@@ -216,35 +225,26 @@ const MaterialManagement = () => {
             </div>
           )}
 
-          {/*Edit Modal */}
+          {/* ===== EDIT MODAL ===== */}
           {isEditModalOpen && selectedMaterial && (
             <div className="modal-overlay">
               <div className="modal-box">
                 <h3>Edit Book</h3>
-                <label>Material Type</label>
-                <input
-                  type="text"
-                  defaultValue={selectedMaterial.type}
-                  onChange={(e) => setFormData({ ...formData, type: e.target.value })}
-                />
-                <label>Title</label>
-                <input
-                  type="text"
-                  defaultValue={selectedMaterial.title}
-                  onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                />
-                <label>Author</label>
-                <input
-                  type="text"
-                  defaultValue={selectedMaterial.author}
-                  onChange={(e) => setFormData({ ...formData, author: e.target.value })}
-                />
-                <label>Stock</label>
-                <input
-                  type="number"
-                  defaultValue={selectedMaterial.stock}
-                  onChange={(e) => setFormData({ ...formData, stock: e.target.value })}
-                />
+                {["Type", "Title", "Author", "Stock"].map((field) => (
+                  <React.Fragment key={field}>
+                    <label>{field}</label>
+                    <input
+                      type={field === "Stock" ? "number" : "text"}
+                      defaultValue={selectedMaterial[field.toLowerCase()]}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          [field.toLowerCase()]: e.target.value,
+                        })
+                      }
+                    />
+                  </React.Fragment>
+                ))}
                 <div className="modal-actions">
                   <button onClick={() => setIsEditModalOpen(false)}>Cancel</button>
                   <button className="save-btn" onClick={handleEditBook}>
@@ -255,8 +255,8 @@ const MaterialManagement = () => {
             </div>
           )}
 
-          {/*Delete Confirmation Modal */}
-          {isDeleteModalOpen && (
+          {/* ===== DELETE MODAL ===== */}
+          {isDeleteModalOpen && selectedMaterial && (
             <div className="modal-overlay">
               <div className="modal-box small">
                 <h3>Are you sure you want to remove this?</h3>
@@ -275,22 +275,16 @@ const MaterialManagement = () => {
         </div>
       </div>
 
+      {/* ===== LOGOUT MODAL ===== */}
       {showLogoutModal && (
         <div className="modal-overlay">
           <div className="modal-box pretty-modal">
             <h3 className="modal-title-green">Are you sure you want to logout?</h3>
-
             <div className="modal-actions center-actions">
-              <button
-                className="cancel-btn"
-                onClick={() => setShowLogoutModal(false)}
-              >
+              <button className="cancel-btn" onClick={() => setShowLogoutModal(false)}>
                 Close
               </button>
-              <button
-                className="confirm-btn delete-btn"
-                onClick={handleLogout}
-              >
+              <button className="confirm-btn delete-btn" onClick={handleLogout}>
                 Confirm
               </button>
             </div>
@@ -302,5 +296,3 @@ const MaterialManagement = () => {
 };
 
 export default MaterialManagement;
-
-
