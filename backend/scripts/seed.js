@@ -31,6 +31,19 @@ function upsertsFromArray(arr, key = '_id') {
   }));
 }
 
+// Parse CLI flags like --createAdminKey --label "Invite"
+function parseArgs(argv) {
+  const out = {};
+  for (let i = 2; i < argv.length; i++) {
+    const a = argv[i];
+    if (!a.startsWith('--')) continue;
+    const k = a.replace(/^--/, '');
+    const v = (i + 1 < argv.length && !argv[i + 1].startsWith('--')) ? argv[++i] : true;
+    out[k] = v;
+  }
+  return out;
+}
+
 // New seed routine using ObjectId and adding visits
 async function main() {
   await client.connect();
@@ -45,8 +58,7 @@ async function main() {
   const demoHash = '$2b$10$vr7A1FNcgAQR/PmKzjVfMuCUWccdXVQqeA9M8I/VeEiFxLzAVtYoO';
   const userDocs = [
     { _id: new ObjectId(), studentId: '10001', name: 'Alice Student', fullName: 'Alice Student', role: 'student', email: 'alice@example.edu', barcode: 'A001', passwordHash: demoHash },
-    { _id: new ObjectId(), studentId: '10002', name: 'Bob Student',   fullName: 'Bob Student',   role: 'student', email: 'bob@example.edu',   barcode: 'B002', passwordHash: demoHash },
-    { _id: new ObjectId(), studentId: '90001', name: 'Sam Admin',     fullName: 'Sam Admin',     role: 'admin', email: 'sam@example.edu', barcode: 'L9001', passwordHash: demoHash }
+    { _id: new ObjectId(), studentId: '10002', name: 'Bob Student',   fullName: 'Bob Student',   role: 'student', email: 'bob@example.edu',   barcode: 'B002', passwordHash: demoHash }
   ];
   await db.collection('users').insertMany(userDocs, { ordered: false, bypassDocumentValidation: true });
 
@@ -96,10 +108,30 @@ async function main() {
 
   await ensureIndexes(db);
 
+  // Seed a default Admin document for admin-only auth
+  await db.collection('admins').updateOne(
+    { email: 'sam@example.edu' },
+    { $set: { email: 'sam@example.edu', fullName: 'Sam Admin', passwordHash: demoHash, status: 'active', updatedAt: new Date() }, $setOnInsert: { createdAt: new Date() } },
+    { upsert: true }
+  );
+
   const counts = await Promise.all(
     ['users','books','loans','visits','hours'].map(async c => [c, await db.collection(c).countDocuments()])
   );
   console.log('Seed complete:', Object.fromEntries(counts));
+
+  // Optional: create an AdminKey and print it when --createAdminKey is passed
+  const argv = parseArgs(process.argv);
+  if (argv.createAdminKey) {
+    const crypto = require('node:crypto');
+    const raw = String(argv.code || crypto.randomBytes(9).toString('base64url'));
+    const codeHash = crypto.createHash('sha256').update(raw).digest('hex');
+    const maxUses = Number(argv.maxUses || 1);
+    const daysToExpire = argv.daysToExpire != null ? Number(argv.daysToExpire) : 30;
+    const expiresAt = daysToExpire > 0 ? new Date(Date.now() + daysToExpire * 864e5) : null;
+    await db.collection('adminkeys').insertOne({ codeHash, label: String(argv.label || 'Seeded Admin Invite'), maxUses, uses: 0, active: true, expiresAt, createdAt: new Date(), updatedAt: new Date() });
+    console.log('Seeded admin invite code:', raw);
+  }
 }
 
 main().catch(e => { console.error('Seed error:', e); })

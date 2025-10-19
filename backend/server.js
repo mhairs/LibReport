@@ -48,9 +48,9 @@ const userSchema = new mongoose.Schema(
       unique: true,
       trim: true,
       validate: {
-        // Format: 03-2324-032246 (2-4-6 digits with hyphens)
-        validator: v => /^\d{2}-\d{4}-\d{6}$/.test(v),
-        message: 'Student ID must match 00-0000-000000'
+        // Accept either dashed format 03-2324-032246 or digits-only (4-12)
+        validator: v => (/^\d{2}-\d{4}-\d{6}$/.test(v)) || (/^\d{4,12}$/.test(v)),
+        message: 'Student ID must be digits (4-12) or 00-0000-000000'
       }
     },
     email: {
@@ -161,6 +161,33 @@ const passwordResetSchema = new mongoose.Schema(
 passwordResetSchema.index({ userId: 1, expiresAt: 1, used: 1 });
 const PasswordReset = mongoose.model('PasswordReset', passwordResetSchema);
 
+// Admin invite/keys to elevate role on signup
+const adminKeySchema = new mongoose.Schema(
+  {
+    codeHash: { type: String, required: true, unique: true },
+    label: { type: String, trim: true },
+    maxUses: { type: Number, default: 1, min: 1 },
+    uses: { type: Number, default: 0, min: 0 },
+    active: { type: Boolean, default: true },
+    expiresAt: { type: Date, default: null }
+  },
+  { timestamps: true }
+);
+adminKeySchema.index({ active: 1, expiresAt: 1 });
+const AdminKey = mongoose.model('AdminKey', adminKeySchema);
+
+// Separate Admin collection for admin-only authentication
+const adminSchema = new mongoose.Schema(
+  {
+    email: { type: String, required: true, unique: true, lowercase: true, trim: true },
+    fullName: { type: String, required: true, trim: true },
+    passwordHash: { type: String, required: true },
+    status: { type: String, enum: ['active','disabled'], default: 'active' }
+  },
+  { timestamps: true }
+);
+const Admin = mongoose.model('Admin', adminSchema);
+
 // --- Health
 app.get('/api/health', async (_req, res) => {
   const dbReady = mongoose.connection.readyState === 1;
@@ -194,6 +221,10 @@ function signToken(user) {
   return jwt.sign({ sub: String(user._id), email: user.email, role: user.role }, JWT_SECRET, { expiresIn: '7d' });
 }
 
+function signAdminToken(admin) {
+  return jwt.sign({ sub: String(admin._id), email: admin.email, kind: 'admin' }, JWT_SECRET, { expiresIn: '7d' });
+}
+
 function authRequired(req, res, next) {
   try {
     const header = req.headers.authorization || '';
@@ -213,10 +244,27 @@ function adminRequired(req, res, next) {
   });
 }
 
+function adminOnlyRequired(req, res, next) {
+  try {
+    const header = req.headers.authorization || '';
+    const [, token] = header.split(' ');
+    if (!token) return res.status(401).json({ error: 'missing token' });
+    const payload = jwt.verify(token, JWT_SECRET);
+    // Backward-compatible: accept either admin-kind tokens, or legacy user tokens with role=admin
+    const isAdminToken = payload?.kind === 'admin';
+    const isLegacyAdmin = payload?.role === 'admin';
+    if (!isAdminToken && !isLegacyAdmin) return res.status(403).json({ error: 'admin token required' });
+    req.admin = payload;
+    return next();
+  } catch {
+    return res.status(401).json({ error: 'invalid token' });
+  }
+}
+
 // --- Auth: Signup
 app.post('/api/auth/signup', async (req, res) => {
   try {
-    const { studentId, email, fullName, password, confirmPassword } = req.body || {};
+    const { studentId, email, fullName, password, confirmPassword, adminCode } = req.body || {};
 
     // Basic presence checks
     if (!studentId || !email || !fullName || !password || !confirmPassword) {
@@ -234,15 +282,15 @@ app.post('/api/auth/signup', async (req, res) => {
     const emailNorm = String(email).trim().toLowerCase();
     const fullNameNorm = String(fullName).trim();
 
-    // Explicit rule checks (mirror schema so clients get fast feedback)
-    if (!/^\d{2}-\d{4}-\d{6}$/.test(studentIdNorm)) {
-      return res.status(400).json({ error: 'Student ID must match 00-0000-000000' });
+    // Explicit rule checks (mirror schema; accept dashed or digits-only 4-12)
+    if (!(/^\d{2}-\d{4}-\d{6}$/.test(studentIdNorm) || /^\d{4,12}$/.test(studentIdNorm))) {
+      return res.status(400).json({ error: 'Student ID must be digits (4-12) or 00-0000-000000' });
     }
     if (!validator.isEmail(emailNorm)) {
       return res.status(400).json({ error: 'Email must contain @ and be valid' });
     }
-    if (!/^[A-Za-z ]+$/.test(fullNameNorm)) {
-      return res.status(400).json({ error: 'Full name must contain letters and spaces only' });
+    if (!/^[A-Za-z .'-]+$/.test(fullNameNorm)) {
+      return res.status(400).json({ error: "Full name may contain letters, spaces, apostrophes, hyphens, and periods only" });
     }
 
     const exists = await User.findOne({ $or: [{ email: emailNorm }, { studentId: studentIdNorm }] }).lean();
@@ -252,7 +300,30 @@ app.post('/api/auth/signup', async (req, res) => {
     }
 
     const passwordHash = await bcrypt.hash(String(password), 10);
-    const user = await User.create({ studentId: studentIdNorm, email: emailNorm, name: fullNameNorm, fullName: fullNameNorm, passwordHash });
+
+    // Backward-compatible: if adminCode provided and valid, create admin User and Admin doc
+    let role = 'student';
+    if (adminCode) {
+      const codeHash = crypto.createHash('sha256').update(String(adminCode)).digest('hex');
+      const key = await AdminKey.findOne({ codeHash, active: true }).lean();
+      const notExpired = !key?.expiresAt || key.expiresAt > new Date();
+      const hasUses = key && key.uses < key.maxUses;
+      if (!key || !notExpired || !hasUses) {
+        return res.status(400).json({ error: 'Invalid or expired admin code' });
+      }
+      role = 'admin';
+      // Ensure corresponding Admin document exists (separate admin collection)
+      try {
+        await mongoose.model('Admin').updateOne(
+          { email: emailNorm },
+          { $set: { email: emailNorm, fullName: fullNameNorm, passwordHash, status: 'active', updatedAt: new Date() }, $setOnInsert: { createdAt: new Date() } },
+          { upsert: true }
+        );
+      } catch (_) { /* ignore */ }
+      AdminKey.updateOne({ _id: key._id }, { $inc: { uses: 1 } }).catch(() => {});
+    }
+
+    const user = await User.create({ studentId: studentIdNorm, email: emailNorm, name: fullNameNorm, fullName: fullNameNorm, passwordHash, role });
     const token = signToken(user);
     return res.status(201).json({
       token,
@@ -283,6 +354,57 @@ app.get('/api/auth/me', authRequired, async (req, res) => {
   const user = await User.findById(req.user.sub).lean();
   if (!user) return res.status(404).json({ error: 'not found' });
   return res.json({ id: String(user._id), studentId: user.studentId, email: user.email, fullName: user.fullName, role: user.role });
+});
+
+// --- Admin Auth: Signup/Login/Me
+app.post('/api/admin/auth/signup', async (req, res) => {
+  try {
+    const { email, fullName, password, confirmPassword, adminCode } = req.body || {};
+    if (!email || !fullName || !password || !confirmPassword || !adminCode) {
+      return res.status(400).json({ error: 'email, fullName, password, confirmPassword, adminCode are required' });
+    }
+    const emailNorm = String(email).trim().toLowerCase();
+    const fullNameNorm = String(fullName).trim();
+    if (!validator.isEmail(emailNorm)) return res.status(400).json({ error: 'invalid email' });
+    if (password !== confirmPassword) return res.status(400).json({ error: 'passwords do not match' });
+    if (String(password).length < 8 || !/[A-Za-z]/.test(password) || !/[0-9]/.test(password)) {
+      return res.status(400).json({ error: 'Password must be at least 8 chars and contain letters and numbers' });
+    }
+    const exists = await Admin.findOne({ email: emailNorm }).lean();
+    if (exists) return res.status(409).json({ error: 'email already in use' });
+
+    const codeHash = crypto.createHash('sha256').update(String(adminCode)).digest('hex');
+    const key = await AdminKey.findOne({ codeHash, active: true }).lean();
+    const notExpired = !key?.expiresAt || key.expiresAt > new Date();
+    const hasUses = key && key.uses < key.maxUses;
+    if (!key || !notExpired || !hasUses) return res.status(400).json({ error: 'Invalid or expired admin code' });
+
+    const passwordHash = await bcrypt.hash(String(password), 10);
+    const admin = await Admin.create({ email: emailNorm, fullName: fullNameNorm, passwordHash });
+    AdminKey.updateOne({ _id: key._id }, { $inc: { uses: 1 } }).catch(() => {});
+    const token = signAdminToken(admin);
+    return res.status(201).json({ token, admin: { id: String(admin._id), email: admin.email, fullName: admin.fullName } });
+  } catch (e) {
+    if (e?.code === 11000) return res.status(409).json({ error: 'email already exists' });
+    return res.status(500).json({ error: 'Server error', detail: e.message });
+  }
+});
+
+app.post('/api/admin/auth/login', async (req, res) => {
+  const { email, password } = req.body || {};
+  if (!email || !password) return res.status(400).json({ error: 'email and password required' });
+  const admin = await Admin.findOne({ email: String(email).toLowerCase() });
+  if (!admin || admin.status !== 'active') return res.status(401).json({ error: 'invalid credentials' });
+  const ok = await bcrypt.compare(String(password), admin.passwordHash);
+  if (!ok) return res.status(401).json({ error: 'invalid credentials' });
+  const token = signAdminToken(admin);
+  return res.json({ token, admin: { id: String(admin._id), email: admin.email, fullName: admin.fullName } });
+});
+
+app.get('/api/admin/auth/me', adminOnlyRequired, async (req, res) => {
+  const admin = await Admin.findById(req.admin.sub).lean();
+  if (!admin) return res.status(404).json({ error: 'not found' });
+  return res.json({ id: String(admin._id), email: admin.email, fullName: admin.fullName, status: admin.status });
 });
 
 // Request password reset (returns token for demo; normally emailed)
@@ -317,7 +439,7 @@ app.post('/api/auth/reset', async (req, res) => {
 });
 
 // --- Dashboard
-app.get('/api/dashboard', authRequired, async (_req, res) => {
+app.get('/api/dashboard', adminOnlyRequired, async (_req, res) => {
   const [users, books, activeLoans, visitsToday] = await Promise.all([
     User.countDocuments(),
     Book.countDocuments(),
@@ -374,7 +496,7 @@ app.post('/api/visit/enter', async (req, res) => {
 });
 
 // --- Books CRUD (Admin)
-app.post('/api/books', adminRequired, async (req, res) => {
+app.post('/api/books', adminOnlyRequired, async (req, res) => {
   try {
     const { title, author, isbn, tags, totalCopies } = req.body || {};
     if (!title || !author) return res.status(400).json({ error: 'title and author required' });
@@ -383,20 +505,20 @@ app.post('/api/books', adminRequired, async (req, res) => {
   } catch (e) { res.status(400).json({ error: e.message }); }
 });
 
-app.get('/api/books', adminRequired, async (req, res) => {
+app.get('/api/books', adminOnlyRequired, async (req, res) => {
   const q = String(req.query.q || '').trim();
   const filter = q ? { $text: { $search: q } } : {};
   const items = await Book.find(filter).limit(200).lean();
   res.json(items);
 });
 
-app.get('/api/books/:id', adminRequired, async (req, res) => {
+app.get('/api/books/:id', adminOnlyRequired, async (req, res) => {
   const item = await Book.findById(req.params.id).lean();
   if (!item) return res.status(404).json({ error: 'Not found' });
   res.json(item);
 });
 
-app.patch('/api/books/:id', adminRequired, async (req, res) => {
+app.patch('/api/books/:id', adminOnlyRequired, async (req, res) => {
   try {
     const item = await Book.findByIdAndUpdate(req.params.id, req.body, { new: true, runValidators: true }).lean();
     if (!item) return res.status(404).json({ error: 'Not found' });
@@ -404,14 +526,14 @@ app.patch('/api/books/:id', adminRequired, async (req, res) => {
   } catch (e) { res.status(400).json({ error: e.message }); }
 });
 
-app.delete('/api/books/:id', adminRequired, async (req, res) => {
+app.delete('/api/books/:id', adminOnlyRequired, async (req, res) => {
   const out = await Book.findByIdAndDelete(req.params.id).lean();
   if (!out) return res.status(404).json({ error: 'Not found' });
   res.status(204).send();
 });
 
 // --- Loans
-app.post('/api/loans/borrow', adminRequired, async (req, res) => {
+app.post('/api/loans/borrow', adminOnlyRequired, async (req, res) => {
   const { userId, bookId, days = 14 } = req.body || {};
   if (!userId || !bookId) return res.status(400).json({ error: 'userId and bookId required' });
   const [user, book] = await Promise.all([
@@ -426,7 +548,7 @@ app.post('/api/loans/borrow', adminRequired, async (req, res) => {
   res.status(201).json(loan);
 });
 
-app.post('/api/loans/return', adminRequired, async (req, res) => {
+app.post('/api/loans/return', adminOnlyRequired, async (req, res) => {
   const { loanId, userId, bookId } = req.body || {};
   const q = loanId ? { _id: loanId } : { userId, bookId, returnedAt: null };
   const loan = await Loan.findOne(q);
@@ -439,7 +561,7 @@ app.post('/api/loans/return', adminRequired, async (req, res) => {
 });
 
 // Active loans with user + book details (for Books Management UI)
-app.get('/api/loans/active', adminRequired, async (_req, res) => {
+app.get('/api/loans/active', adminOnlyRequired, async (_req, res) => {
   const now = new Date();
   const items = await Loan.aggregate([
     { $match: { returnedAt: null } },
@@ -501,7 +623,7 @@ app.get('/api/hours', authRequired, async (req, res) => {
   res.json({ branch, items });
 });
 
-app.put('/api/hours/:branch/:day', adminRequired, async (req, res) => {
+app.put('/api/hours/:branch/:day', adminOnlyRequired, async (req, res) => {
   const branch = String(req.params.branch);
   const day = Number(req.params.day);
   const { open, close } = req.body || {};
@@ -515,14 +637,14 @@ app.put('/api/hours/:branch/:day', adminRequired, async (req, res) => {
 });
 
 // --- Admin: users list + role update
-app.get('/api/admin/users', adminRequired, async (req, res) => {
+app.get('/api/admin/users', adminOnlyRequired, async (req, res) => {
   const q = String(req.query.q || '').trim();
   const filter = q ? { $or: [ { fullName: new RegExp(q, 'i') }, { email: new RegExp(q, 'i') }, { studentId: new RegExp(q, 'i') } ] } : {};
   const items = await User.find(filter).select('fullName email studentId role createdAt').limit(200).lean();
   res.json(items);
 });
 
-app.patch('/api/admin/users/:id/role', adminRequired, async (req, res) => {
+app.patch('/api/admin/users/:id/role', adminOnlyRequired, async (req, res) => {
   const { role } = req.body || {};
   if (!role) return res.status(400).json({ error: 'role required' });
   const user = await User.findByIdAndUpdate(req.params.id, { role }, { new: true, runValidators: true }).lean();
@@ -530,5 +652,61 @@ app.patch('/api/admin/users/:id/role', adminRequired, async (req, res) => {
   res.json({ id: String(user._id), role: user.role });
 });
 
+// --- Admin: admin signup keys
+app.get('/api/admin/keys', adminOnlyRequired, async (_req, res) => {
+  const items = await AdminKey.find().sort({ createdAt: -1 }).lean();
+  // Do not return raw hashes; mask sensitive fields
+  const safe = items.map(k => ({
+    id: String(k._id),
+    label: k.label,
+    maxUses: k.maxUses,
+    uses: k.uses,
+    active: k.active,
+    expiresAt: k.expiresAt,
+    createdAt: k.createdAt,
+    updatedAt: k.updatedAt
+  }));
+  res.json({ items: safe });
+});
+
+app.post('/api/admin/keys', adminOnlyRequired, async (req, res) => {
+  const { label = 'Admin invite', maxUses = 1, daysToExpire = 30, code } = req.body || {};
+  const raw = String(code || crypto.randomBytes(9).toString('base64url'));
+  const codeHash = crypto.createHash('sha256').update(raw).digest('hex');
+  const expiresAt = daysToExpire ? new Date(Date.now() + Number(daysToExpire) * 864e5) : null;
+  try {
+    const doc = await AdminKey.create({ codeHash, label: String(label), maxUses: Number(maxUses), uses: 0, active: true, expiresAt });
+    res.status(201).json({
+      // Return the raw code only on creation so admin can copy/paste into UI
+      code: raw,
+      key: { id: String(doc._id), label: doc.label, maxUses: doc.maxUses, uses: doc.uses, active: doc.active, expiresAt: doc.expiresAt }
+    });
+  } catch (e) {
+    if (e?.code === 11000) return res.status(409).json({ error: 'Duplicate key' });
+    res.status(400).json({ error: e.message });
+  }
+});
+
+app.patch('/api/admin/keys/:id', adminOnlyRequired, async (req, res) => {
+  const { active, label, maxUses, expiresAt } = req.body || {};
+  const update = {};
+  if (typeof active === 'boolean') update.active = active;
+  if (label !== undefined) update.label = String(label);
+  if (maxUses !== undefined) update.maxUses = Number(maxUses);
+  if (expiresAt !== undefined) update.expiresAt = expiresAt ? new Date(expiresAt) : null;
+  const key = await AdminKey.findByIdAndUpdate(req.params.id, update, { new: true }).lean();
+  if (!key) return res.status(404).json({ error: 'Not found' });
+  res.json({ id: String(key._id), label: key.label, maxUses: key.maxUses, uses: key.uses, active: key.active, expiresAt: key.expiresAt });
+});
+
 const PORT = process.env.BACKEND_PORT || 4000;
-app.listen(PORT, () => console.log(`Backend listening on http://localhost:${PORT}`));
+
+function start(port = PORT) {
+  return app.listen(port, () => console.log(`Backend listening on http://localhost:${port}`));
+}
+
+if (require.main === module) {
+  start();
+}
+
+module.exports = { app, start };

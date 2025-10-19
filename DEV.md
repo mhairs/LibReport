@@ -19,7 +19,7 @@ Local Development
 - Health checks
   - Backend: `GET http://localhost:4000/api/health`
   - Frontend: `GET http://localhost:3000/health`
-  - DB ping: `node db-ping.js` or `npm run mongo:ping`
+  - DB ping: `npm run mongo:ping`
 
 - MongoDB connection tips
   - Prefer copying the full connection string from MongoDB Atlas/Compass into `.env` as `MONGO_URI=` (or `MONGODB_URI=`).
