@@ -36,9 +36,11 @@ function parseArgs(argv) {
     await client.connect();
     const db = client.db(dbName);
     const now = new Date();
-    const result = await db.collection('admins').updateOne(
-      { email },
-      { $set: { email, fullName, passwordHash: hash, status: 'active', updatedAt: now }, $setOnInsert: { createdAt: now } },
+    const adminId = String(args.adminId || args.studentId || '').trim() || undefined;
+    const role = String(args.role || 'admin');
+    const result = await db.collection('admin').updateOne(
+      { $or: [ { email }, adminId ? { adminId } : null ].filter(Boolean) },
+      { $set: { email, adminId, fullName, passwordHash: hash, role, status: 'active', updatedAt: now }, $setOnInsert: { createdAt: now } },
       { upsert: true }
     );
     if (result.upsertedId) {
@@ -51,4 +53,3 @@ function parseArgs(argv) {
     await client.close().catch(() => {});
   }
 })();
-

@@ -31,15 +31,17 @@ function parseArgs(argv) {
   try {
     await client.connect();
     const db = client.db(dbName);
-    const admin = await db.collection('admins').findOne({ email });
+    const idArg = String(parseArgs(process.argv).adminId || '').trim();
+    const admin = email
+      ? await db.collection('admin').findOne({ email })
+      : await db.collection('admin').findOne({ adminId: idArg });
     if (!admin) {
-      console.error('Admin not found for email:', email);
+      console.error('Admin not found');
       process.exit(1);
     }
-    const token = jwt.sign({ sub: String(admin._id), email: admin.email, kind: 'admin' }, secret, { expiresIn: '7d' });
+    const token = jwt.sign({ sub: String(admin._id), email: admin.email, adminId: admin.adminId, role: admin.role, kind: 'admin' }, secret, { expiresIn: '7d' });
     console.log(token);
   } finally {
     await client.close().catch(() => {});
   }
 })();
-

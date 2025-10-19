@@ -108,10 +108,10 @@ async function main() {
 
   await ensureIndexes(db);
 
-  // Seed a default Admin document for admin-only auth
-  await db.collection('admins').updateOne(
-    { email: 'sam@example.edu' },
-    { $set: { email: 'sam@example.edu', fullName: 'Sam Admin', passwordHash: demoHash, status: 'active', updatedAt: new Date() }, $setOnInsert: { createdAt: new Date() } },
+  // Seed a default Admin document (collection 'admin') for admin-only auth
+  await db.collection('admin').updateOne(
+    { $or: [ { email: 'sam@example.edu' }, { adminId: '03-2324-032247' } ] },
+    { $set: { email: 'sam@example.edu', adminId: '03-2324-032247', fullName: 'Sam Admin', role: 'admin', passwordHash: demoHash, status: 'active', updatedAt: new Date() }, $setOnInsert: { createdAt: new Date() } },
     { upsert: true }
   );
 

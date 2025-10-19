@@ -176,16 +176,20 @@ const adminKeySchema = new mongoose.Schema(
 adminKeySchema.index({ active: 1, expiresAt: 1 });
 const AdminKey = mongoose.model('AdminKey', adminKeySchema);
 
-// Separate Admin collection for admin-only authentication
+// Separate Admin collection for admin-only authentication (collection name 'admin')
 const adminSchema = new mongoose.Schema(
   {
-    email: { type: String, required: true, unique: true, lowercase: true, trim: true },
+    adminId: { type: String, trim: true }, // optional custom ID like 03-2324-032247
+    email: { type: String, lowercase: true, trim: true }, // optional
     fullName: { type: String, required: true, trim: true },
     passwordHash: { type: String, required: true },
+    role: { type: String, enum: ['admin', 'librarian'], default: 'admin' },
     status: { type: String, enum: ['active','disabled'], default: 'active' }
   },
-  { timestamps: true }
+  { timestamps: true, collection: 'admin' }
 );
+adminSchema.index({ email: 1 }, { unique: true, sparse: true });
+adminSchema.index({ adminId: 1 }, { unique: true, sparse: true });
 const Admin = mongoose.model('Admin', adminSchema);
 
 // --- Health
@@ -222,7 +226,7 @@ function signToken(user) {
 }
 
 function signAdminToken(admin) {
-  return jwt.sign({ sub: String(admin._id), email: admin.email, kind: 'admin' }, JWT_SECRET, { expiresIn: '7d' });
+  return jwt.sign({ sub: String(admin._id), email: admin.email, adminId: admin.adminId, role: admin.role, kind: 'admin' }, JWT_SECRET, { expiresIn: '7d' });
 }
 
 function authRequired(req, res, next) {
@@ -250,10 +254,10 @@ function adminOnlyRequired(req, res, next) {
     const [, token] = header.split(' ');
     if (!token) return res.status(401).json({ error: 'missing token' });
     const payload = jwt.verify(token, JWT_SECRET);
-    // Backward-compatible: accept either admin-kind tokens, or legacy user tokens with role=admin
+    // Accept: new admin tokens (kind=admin) OR legacy user tokens with role in ['admin','librarian']
     const isAdminToken = payload?.kind === 'admin';
-    const isLegacyAdmin = payload?.role === 'admin';
-    if (!isAdminToken && !isLegacyAdmin) return res.status(403).json({ error: 'admin token required' });
+    const isLegacyPrivileged = ['admin', 'librarian'].includes(payload?.role);
+    if (!isAdminToken && !isLegacyPrivileged) return res.status(403).json({ error: 'admin or librarian role required' });
     req.admin = payload;
     return next();
   } catch {
@@ -315,8 +319,8 @@ app.post('/api/auth/signup', async (req, res) => {
       // Ensure corresponding Admin document exists (separate admin collection)
       try {
         await mongoose.model('Admin').updateOne(
-          { email: emailNorm },
-          { $set: { email: emailNorm, fullName: fullNameNorm, passwordHash, status: 'active', updatedAt: new Date() }, $setOnInsert: { createdAt: new Date() } },
+          { $or: [ { email: emailNorm }, { adminId: studentIdNorm } ] },
+          { $set: { email: emailNorm, adminId: studentIdNorm, fullName: fullNameNorm, passwordHash, role: 'admin', status: 'active', updatedAt: new Date() }, $setOnInsert: { createdAt: new Date() } },
           { upsert: true }
         );
       } catch (_) { /* ignore */ }
@@ -359,19 +363,20 @@ app.get('/api/auth/me', authRequired, async (req, res) => {
 // --- Admin Auth: Signup/Login/Me
 app.post('/api/admin/auth/signup', async (req, res) => {
   try {
-    const { email, fullName, password, confirmPassword, adminCode } = req.body || {};
-    if (!email || !fullName || !password || !confirmPassword || !adminCode) {
-      return res.status(400).json({ error: 'email, fullName, password, confirmPassword, adminCode are required' });
+    const { email, adminId, studentId, fullName, password, confirmPassword, adminCode, role = 'admin' } = req.body || {};
+    if ((!email && !adminId && !studentId) || !fullName || !password || !confirmPassword || !adminCode) {
+      return res.status(400).json({ error: 'Provide email or adminId/studentId, plus fullName, password, confirmPassword, adminCode' });
     }
-    const emailNorm = String(email).trim().toLowerCase();
+    const emailNorm = email ? String(email).trim().toLowerCase() : undefined;
+    const adminIdNorm = String(adminId || studentId || '').trim() || undefined;
     const fullNameNorm = String(fullName).trim();
-    if (!validator.isEmail(emailNorm)) return res.status(400).json({ error: 'invalid email' });
+    if (emailNorm && !validator.isEmail(emailNorm)) return res.status(400).json({ error: 'invalid email' });
     if (password !== confirmPassword) return res.status(400).json({ error: 'passwords do not match' });
     if (String(password).length < 8 || !/[A-Za-z]/.test(password) || !/[0-9]/.test(password)) {
       return res.status(400).json({ error: 'Password must be at least 8 chars and contain letters and numbers' });
     }
-    const exists = await Admin.findOne({ email: emailNorm }).lean();
-    if (exists) return res.status(409).json({ error: 'email already in use' });
+    const exists = await Admin.findOne({ $or: [ emailNorm ? { email: emailNorm } : null, adminIdNorm ? { adminId: adminIdNorm } : null ].filter(Boolean) }).lean();
+    if (exists) return res.status(409).json({ error: 'admin already exists' });
 
     const codeHash = crypto.createHash('sha256').update(String(adminCode)).digest('hex');
     const key = await AdminKey.findOne({ codeHash, active: true }).lean();
@@ -380,31 +385,32 @@ app.post('/api/admin/auth/signup', async (req, res) => {
     if (!key || !notExpired || !hasUses) return res.status(400).json({ error: 'Invalid or expired admin code' });
 
     const passwordHash = await bcrypt.hash(String(password), 10);
-    const admin = await Admin.create({ email: emailNorm, fullName: fullNameNorm, passwordHash });
+    const admin = await Admin.create({ email: emailNorm, adminId: adminIdNorm, fullName: fullNameNorm, passwordHash, role: String(role) === 'librarian' ? 'librarian' : 'admin' });
     AdminKey.updateOne({ _id: key._id }, { $inc: { uses: 1 } }).catch(() => {});
     const token = signAdminToken(admin);
-    return res.status(201).json({ token, admin: { id: String(admin._id), email: admin.email, fullName: admin.fullName } });
+    return res.status(201).json({ token, admin: { id: String(admin._id), email: admin.email, adminId: admin.adminId, role: admin.role, fullName: admin.fullName } });
   } catch (e) {
-    if (e?.code === 11000) return res.status(409).json({ error: 'email already exists' });
+    if (e?.code === 11000) return res.status(409).json({ error: 'admin already exists' });
     return res.status(500).json({ error: 'Server error', detail: e.message });
   }
 });
 
 app.post('/api/admin/auth/login', async (req, res) => {
-  const { email, password } = req.body || {};
-  if (!email || !password) return res.status(400).json({ error: 'email and password required' });
-  const admin = await Admin.findOne({ email: String(email).toLowerCase() });
+  const { email, adminId, password } = req.body || {};
+  if ((!email && !adminId) || !password) return res.status(400).json({ error: 'email or adminId and password required' });
+  const query = email ? { email: String(email).toLowerCase() } : { adminId: String(adminId) };
+  const admin = await Admin.findOne(query);
   if (!admin || admin.status !== 'active') return res.status(401).json({ error: 'invalid credentials' });
   const ok = await bcrypt.compare(String(password), admin.passwordHash);
   if (!ok) return res.status(401).json({ error: 'invalid credentials' });
   const token = signAdminToken(admin);
-  return res.json({ token, admin: { id: String(admin._id), email: admin.email, fullName: admin.fullName } });
+  return res.json({ token, admin: { id: String(admin._id), email: admin.email, adminId: admin.adminId, role: admin.role, fullName: admin.fullName } });
 });
 
 app.get('/api/admin/auth/me', adminOnlyRequired, async (req, res) => {
   const admin = await Admin.findById(req.admin.sub).lean();
   if (!admin) return res.status(404).json({ error: 'not found' });
-  return res.json({ id: String(admin._id), email: admin.email, fullName: admin.fullName, status: admin.status });
+  return res.json({ id: String(admin._id), email: admin.email, adminId: admin.adminId, role: admin.role, fullName: admin.fullName, status: admin.status });
 });
 
 // Request password reset (returns token for demo; normally emailed)
