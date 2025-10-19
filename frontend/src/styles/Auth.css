@@ -272,3 +272,10 @@ body {
     width: 70%;
   }
 }
+
+.error {
+  color: #b00020;
+  text-align: center;
+  margin-bottom: 8px;
+  font-size: 14px;
+}

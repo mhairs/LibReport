@@ -21,7 +21,6 @@ const SignIn = () => {
       return;
     }
 
-    // ✅ Validation logic same as original
     if (selectedRole === "student") {
       if (!/^[0-9]+$/.test(userId)) {
         setError("Only numbers are allowed in Student ID.");
@@ -32,7 +31,6 @@ const SignIn = () => {
         return;
       }
     } else {
-      // ✅ Admin validation (you can adjust to match backend)
       if (!userId.includes("@")) {
         setError("Please enter a valid Admin Email.");
         return;
@@ -46,8 +44,6 @@ const SignIn = () => {
 
     try {
       setLoading(true);
-
-      // ✅ Send request to backend
       const { data } = await api.post("/auth/login", {
         email: selectedRole === "admin" ? userId : undefined,
         studentId: selectedRole === "student" ? userId : undefined,
@@ -60,11 +56,10 @@ const SignIn = () => {
         localStorage.setItem("lr_user", JSON.stringify(data.user || {}));
       } catch {}
 
-      // ✅ Redirect by role
       if (selectedRole === "admin") {
-        navigate("/pages/admin/dashboard");
+        navigate("/dashboard");
       } else {
-        navigate("/pages/student/dashboard");
+        navigate("/dashboard");
       }
     } catch (err) {
       const msg = err?.response?.data?.error || "Login failed. Please try again.";
@@ -106,15 +101,7 @@ const SignIn = () => {
 
         <h3>Log in to your account</h3>
 
-        {/* ✅ Error display */}
-        {error && (
-          <div
-            className="error"
-            style={{ color: "#b00020", textAlign: "center", marginBottom: "8px" }}
-          >
-            {error}
-          </div>
-        )}
+        {error && <div className="error">{error}</div>}
 
         <form className="auth-form" onSubmit={handleLogin}>
           <div className="form-group">

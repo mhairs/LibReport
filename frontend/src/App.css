@@ -36,3 +36,10 @@
     transform: rotate(360deg);
   }
 }
+
+.auth-container {
+  border: 5px solid red !important; /* Temporary for testing */
+}
+.role-selection {
+  border: 3px solid blue !important; /* Test role-selection */
+}

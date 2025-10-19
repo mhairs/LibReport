@@ -6,7 +6,7 @@ import reportWebVitals from './reportWebVitals';
 import "@fontsource/lora";
 import "@fontsource/lora/700.css";
 import "@fontsource/merriweather";
-import "@fontsource/merriweather/700.css"
+import "@fontsource/merriweather/700.css";
 
 const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(
